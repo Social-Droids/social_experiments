@@ -1,0 +1,43 @@
+<?xml version="1.0"?>
+<launch>
+
+  <arg name="robot_name"            default="robot"/>
+  <arg name="map_name"              default="simple_room"/>
+
+  <arg name="use_fake_localization" default="false"/>
+  <arg name="local_planner"         default="eband_local_planner/EBandPlannerROS"/>
+
+  <param name="max_experiments"     value="10"/>
+  <param name="path_bags_storage"   value=""/>
+
+<!-- ###################################################################### -->
+<!-- ###################################################################### -->
+<!-- ###################################################################### -->
+
+  <!-- navigation -->
+  <include file="$(find hera_bringup)/launch/bring_up.launch" >
+    <arg name="map_name"              default="$(arg map_name)"/>
+    <arg name="use_fake_localization" default="$(arg use_fake_localization)"/>
+    <arg name="local_planner"         default="$(arg local_planner)"/>
+    <arg name="enable_description"    default="false"/>
+  </include>
+
+  <!-- social_experiments -->
+  <node name="social_experiments" pkg="social_experiments" type="experiments.py"
+    output="screen" required="true">
+    <param name="world_model_name"  value="$(arg map_name)"/>
+    <param name="robot_model_name"  value="$(arg robot_name)"/>
+    <param name="max_experiments"   value="$(arg max_experiments)"/>
+    <param name="path_bags_storage" value="$(arg path_bags_storage)"/>
+    <param name="robot_vel"                value="0.3"/>
+    <param name="space_factor_tolerance"   value="5"/>
+    <param name="time_factor_tolerance"    value="5"/>
+    <param name="path_img_freecells_start" value="$(find social_experiments)/config/map/$(arg map_name)/freecells_start.png"/>
+    <param name="path_img_freecells_goal"  value="$(find social_experiments)/config/map/$(arg map_name)/freecells_goal.png"/>
+  </node>
+
+
+  <node name="move_base_logger" pkg="rosservice" type="rosservice"
+    args="call /move_base/set_logger_level {'logger: '''ros''',level: '''fatal''' '}" />
+
+</launch>
