@@ -16,9 +16,14 @@ from visualization_msgs.msg import MarkerArray
 from visualization_msgs.msg import Marker
 from move_base_msgs.msg import MoveBaseAction
 from move_base_msgs.msg import MoveBaseGoal
+from sensor_msgs.msg import PointCloud2
+from sensor_msgs.msg import LaserScan
 from geometry_msgs.msg import PoseWithCovarianceStamped
+from geometry_msgs.msg import TransformStamped
 from geometry_msgs.msg import PoseStamped
 from geometry_msgs.msg import Quaternion
+from geometry_msgs.msg import Transform
+from geometry_msgs.msg import Vector3
 from geometry_msgs.msg import Point
 from geometry_msgs.msg import Pose
 from gazebo_msgs.msg import ModelStates
@@ -30,6 +35,8 @@ from nav_msgs.srv import GetPlan
 from std_msgs.msg import Header
 from std_msgs.msg import Bool
 from std_srvs.srv import Empty
+from tf2_msgs.msg import TFMessage
+from rosgraph_msgs.msg import Clock
 
 class Status(Enum):
     NONE = 0
@@ -39,37 +46,10 @@ class Status(Enum):
     ABORTION = 4
     COLLISION = 5
 
-class Data():
-    """docstring for Data."""
-    def __init__(self):
-
-        # pre experiment info
-        self.start = None
-        self.goal = None
-        self.plan = None
-        self.space_min = None
-        self.time_min = None
-
-        # in experiment info
-        self.odom = []
-        self.v_space_elapsed = []
-        self.v_time_elapsed = []
-
-        # pos experiment info
-        self.status = None
-        self.space_elapsed = None
-        self.time_elapsed = None
-
 class Experiments():
-    """docstring for Experiments"""
     def __init__(self):
+
         rospy.init_node('Experiments')
-        self.rate = rospy.Rate(10)
-        self.tf_listener = tf.TransformListener()
-        self.robot_position = None
-        self.freecells_start = []
-        self.freecells_goal = []
-        self.bag = None
 
         # parameters
         self.world_model_name = rospy.get_param('social_experiments/world_model_name', '')
@@ -82,18 +62,39 @@ class Experiments():
         self.path_img_freecells_start = rospy.get_param('social_experiments/path_img_freecells_start', '')
         self.path_img_freecells_goal = rospy.get_param('social_experiments/path_img_freecells_goal', '')
 
+        # variables
+        self.rate = rospy.Rate(10)
+        self.freecells_start = []
+        self.freecells_goal = []
+        #
+        self.bag = None
+        self.clock = None
+        self.tf = []
+        self.robot_pose = None
+        # self.bsf = None
+        # self.bsb = None
+        # self.pc = None
+        #
+        self.experiment_finished = False
+        self.robot_updated = False
+
         # publishers
         self.pub_initpose = rospy.Publisher('/initialpose', PoseWithCovarianceStamped, queue_size=10)
         self.pub_freecells_start = rospy.Publisher('/freecells_start', MarkerArray, queue_size=10)
         self.pub_freecells_goal = rospy.Publisher('/freecells_goal', MarkerArray, queue_size=10)
 
-        # # subscribers
+        # subscribers
+        rospy.Subscriber('/gazebo/model_states', ModelStates, self.model_callback)
+        rospy.Subscriber('/tf', TFMessage, self.tf_callback)
+        rospy.Subscriber('/clock', Clock, self.clock_callback)
         # rospy.Subscriber('/map', OccupancyGrid, self.map1_callback)
         # rospy.Subscriber('/move_base/global_costmap/costmap', OccupancyGrid, self.map2_callback)
-        rospy.Subscriber('/gazebo/model_states', ModelStates, self.model_callback)
         # rospy.Subscriber('/collision', Bool, self.collision_callback)
-        #
-        # # services
+        # rospy.Subscriber('/base_scan_front', LaserScan, self.bsf_callback)
+        # rospy.Subscriber('/base_scan_back', LaserScan, self.bsb_callback)
+        # rospy.Subscriber('/xtion/depth/points', PointCloud2, self.pc_callback)
+
+        # services
         rospy.loginfo('Wating for "/gazebo/set_model_state" service')
         rospy.wait_for_service('/gazebo/set_model_state')
         self.model_reposition = rospy.ServiceProxy('/gazebo/set_model_state', SetModelState)
@@ -108,7 +109,61 @@ class Experiments():
         self.move_base = actionlib.SimpleActionClient('/move_base', MoveBaseAction)
         self.move_base.wait_for_server()
 
+        # get freecells
+        img_freecells_start = cv2.imread(self.path_img_freecells_start,0)
+        img_freecells_goal = cv2.imread(self.path_img_freecells_goal,0)
+        (h_s, w_s) = img_freecells_start.shape[:2]
+        (h_g, w_g) = img_freecells_goal.shape[:2]
+        MS = cv2.getRotationMatrix2D((w_s/2, h_s/2), -90, 1.0)
+        MG = cv2.getRotationMatrix2D((w_g/2, h_g/2), -90, 1.0)
+        img_freecells_start = cv2.warpAffine(img_freecells_start, MS, (h_s,w_s))
+        img_freecells_goal = cv2.warpAffine(img_freecells_goal, MG, (h_g,w_g))
+        a_s = numpy.argwhere(img_freecells_start == 255)
+        a_g = numpy.argwhere(img_freecells_goal == 255)
+        self.freecells_start = a_s*0.05 - 100
+        self.freecells_goal = a_g*0.05 - 100
+        start_marker_array = self.get_freecells_markers(self.freecells_start)
+        goal_marker_array = self.get_freecells_markers(self.freecells_goal)
+        self.pub_freecells_start.publish(start_marker_array)
+        self.pub_freecells_goal.publish(goal_marker_array)
+
+        # log
+        rospy.loginfo('world_model_name: ' + self.world_model_name)
+        rospy.loginfo('robot: ' + self.robot_model_name)
+        rospy.loginfo('robot vel: ' + str(self.robot_vel))
+        rospy.loginfo('space factor tolerance: ' + str(self.space_factor_tolerance))
+        rospy.loginfo('time factor tolerance: ' + str(self.time_factor_tolerance))
+        rospy.loginfo('max experiments: ' + str(self.max_experiments))
+        print ('')
+
     #### calbacks ####
+
+    def model_callback(self, data):
+        try:
+            index = data.name.index(self.robot_model_name)
+            self.robot_pose = data.pose[index]
+            self.robot_updated = True
+        except ValueError as e:
+            pass
+
+    def movebase_callback(self, state, result):
+        self.experiment_finished = True
+        # if (state == actionlib::SimpleClientGoalState::SUCCEEDED){
+        if (state == 3):
+            self.status = Status.SUCCESS
+        else:
+            self.status = Status.ABORTION
+
+    def tf_callback(self, data):
+        self.tf = data
+    def clock_callback(self, data):
+        self.clock = data
+    # def bsf_callback(self, data):
+    #     self.bsf = data
+    # def bsb_callback(self, data):
+    #     self.bsb = data
+    # def pc_callback(self, data):
+    #     self.pc = data
 
     # def map1_callback(self, data):
     #     # self.map1 = data.data
@@ -122,27 +177,11 @@ class Experiments():
     #     img.putdata(data.data)
     #     img.save('costmap.png')
     #
-    #
-    #
-    def model_callback(self, data):
-        try:
-            index = data.name.index(self.robot_model_name)
-            self.actual_robot_position = data.pose[index].position
-            self.robot_updated = True
-        except ValueError as e:
-            pass
     # def collision_callback(self, data):
     #     if (data.data == True):
     #         self.experiment_finished = True
     #         self.status = Status.COLLISION
     #
-    def movebase_callback(self, state, result):
-        self.experiment_finished = True
-        # if (state == actionlib::SimpleClientGoalState::SUCCEEDED){
-        if (state == 3):
-            self.status = Status.SUCCESS
-        else:
-            self.status = Status.ABORTION
 
 
     ### functions ####
@@ -231,43 +270,13 @@ class Experiments():
         return markerArray
 
     def start(self):
-        rospy.loginfo('world_model_name: ' + self.world_model_name)
-        rospy.loginfo('robot: ' + self.robot_model_name)
-        rospy.loginfo('robot vel: ' + str(self.robot_vel))
-        rospy.loginfo('space factor tolerance: ' + str(self.space_factor_tolerance))
-        rospy.loginfo('time factor tolerance: ' + str(self.time_factor_tolerance))
-        rospy.loginfo('max experiments: ' + str(self.max_experiments) + '\n')
-
-
-        # get freecells
-        img_freecells_start = cv2.imread(self.path_img_freecells_start,0)
-        img_freecells_goal = cv2.imread(self.path_img_freecells_goal,0)
-        (h_s, w_s) = img_freecells_start.shape[:2]
-        (h_g, w_g) = img_freecells_goal.shape[:2]
-        MS = cv2.getRotationMatrix2D((w_s/2, h_s/2), -90, 1.0)
-        MG = cv2.getRotationMatrix2D((w_g/2, h_g/2), -90, 1.0)
-        img_freecells_start = cv2.warpAffine(img_freecells_start, MS, (h_s,w_s))
-        img_freecells_goal = cv2.warpAffine(img_freecells_goal, MG, (h_g,w_g))
-        a_s = numpy.argwhere(img_freecells_start == 255)
-        a_g = numpy.argwhere(img_freecells_goal == 255)
-        self.freecells_start = a_s*0.05 - 100
-        self.freecells_goal = a_g*0.05 - 100
-        start_marker_array = self.get_freecells_markers(self.freecells_start)
-        goal_marker_array = self.get_freecells_markers(self.freecells_goal)
-        self.pub_freecells_start.publish(start_marker_array)
-        self.pub_freecells_goal.publish(goal_marker_array)
 
         # experiments loop
         for i in range(0, self.max_experiments):
+            rospy.loginfo('preparing experiment %i/%i' % (i+1, self.max_experiments))
 
             # init bag
             self.bag = rosbag.Bag(self.path_bags_storage + "/" + str(i)+'.bag', 'w')
-
-            # prepare experiment
-            rospy.loginfo('prepare experiment %i/%i' % (i+1, self.max_experiments))
-
-            # store experiments
-            data = Data()
 
             # reset variables
             self.experiment_finished = False
@@ -275,27 +284,24 @@ class Experiments():
 
             # set start and goal random
             (start, goal) = self.get_start_and_goal_random()
-            data.start = start
-            data.goal = goal
             rospy.loginfo('Start'
-            + '(x=' + str(data.start.pose.position.x)
-            + ',y=' + str(data.start.pose.position.x)
-            + ',ang=' + str(data.start.pose.orientation.z) + ')')
+            + '(x=' + str(start.pose.position.x)
+            + ',y=' + str(start.pose.position.x)
+            + ',ang=' + str(start.pose.orientation.z) + ')')
             rospy.loginfo('Goal'
-            + '(x=' + str(data.goal.pose.position.x)
-            + ',y=' + str(data.goal.pose.position.y)
-            + ',ang=' + str(data.goal.pose.orientation.z) + ')')
-            self.bag.write('start', data.start)
-            self.bag.write('goal', data.goal)
+            + '(x=' + str(goal.pose.position.x)
+            + ',y=' + str(goal.pose.position.y)
+            + ',ang=' + str(goal.pose.orientation.z) + ')')
 
-            # get a plan
-            rospy.loginfo('Finding a plan...')
-            plan = Path()
-            while(len(plan.poses) is 0):
-                plan = self.make_plan(data.start, data.goal, 0.0).plan
-            data.plan= plan
-            rospy.loginfo('plan size: ' + str(len(plan.poses)))
-            self.bag.write('plan', data.plan)
+            # paths
+            path_plan = Path(Header(0,rospy.Time.now(),"/map"),[])
+            path_executed = Path(Header(0,rospy.Time.now(),"/map"),[])
+
+            # Finding a path plan
+            rospy.loginfo('Finding a path plan...')
+            while(len(path_plan.poses) is 0):
+                path_plan.poses = self.make_plan(start, goal, 0.1).plan.poses
+            rospy.loginfo('Path plan size: ' + str(len(path_plan.poses)))
 
             # Reset world
             world_model = ModelState()
@@ -306,123 +312,129 @@ class Experiments():
             # Reset robot
             robot_model = ModelState()
             robot_model.model_name = self.robot_model_name
-            robot_model.pose = data.start.pose
+            robot_model.pose = start.pose
             self.model_reposition(robot_model)
             self.rate.sleep()
 
-            # Reset robot amcl position
-            initpose = PoseWithCovarianceStamped()
-            initpose.header = Header(0,rospy.Time.now(),'/map')
-            initpose.pose.pose = data.start.pose
-            self.pub_initpose.publish(initpose)
-            self.rate.sleep()
+            # # Reset robot position
+            # initpose = PoseWithCovarianceStamped()
+            # initpose.header = Header(0,rospy.Time.now(),'map')
+            # initpose.pose.pose = start.pose
+            # self.pub_initpose.publish(initpose)
+            # self.rate.sleep()
 
             # clear costmaps
             self.clear_costmaps()
             self.rate.sleep()
 
             # set min dist and time to reach destination
-            (space_min, time_min) = self.get_min_dist_time(plan)
-            data.space_min = space_min
-            data.time_min = time_min
-            rospy.loginfo('Space min: ' + str(data.space_min) + ' meters')
-            rospy.loginfo('Time min: ' + str(data.time_min) + ' seconds')
+            (space_min, time_min) = self.get_min_dist_time(path_plan)
+            rospy.loginfo('Space min: ' + str(space_min) + ' meters')
+            rospy.loginfo('Time min: ' + str(time_min) + ' seconds')
 
-            rospy.loginfo('Waiting for robot position update...')
+            # set max dist and time to reach destination
+            space_max = space_min*self.space_factor_tolerance
+            time_max = time_min*self.time_factor_tolerance
+            rospy.loginfo('Space max: ' + str(space_max) + ' meters')
+            rospy.loginfo('Time max: ' + str(time_max) + ' seconds')
+
+            # bag
+            self.bag.write('/clock', self.clock)
+            self.bag.write('/start', start)
+            self.bag.write('/goal', goal)
+            self.bag.write('/path_plan', path_plan)
+
+            # Waiting for robot update
+            rospy.loginfo('Waiting for robot update...')
             self.robot_updated = False;
             while not rospy.is_shutdown():
                 self.rate.sleep()
                 if(self.robot_updated):
                     break
 
-
-            # start
+            # start experiment
             rospy.loginfo('Start experiment %i/%i' % (i+1, self.max_experiments))
 
             # send commando to move_base
-            goal = MoveBaseGoal()
-            goal.target_pose.header = data.goal.header
-            goal.target_pose.pose = data.goal.pose
-            self.move_base.send_goal(goal, done_cb=self.movebase_callback)
+            mb_goal = MoveBaseGoal()
+            mb_goal.target_pose.header = goal.header
+            mb_goal.target_pose.pose = goal.pose
+            self.move_base.send_goal(mb_goal, done_cb=self.movebase_callback)
             # self.move_base.wait_for_result()
 
-            #
-            space_elapsed = 0
-            s_begin = Point()
-            s_begin.x = data.start.pose.position.x
-            s_begin.y = data.start.pose.position.y
-            s_begin.z = 0.0
-            data.v_space_elapsed.append(s_begin)
+            delta_space = []
+            total_space = 0
+            s_begin = start.pose.position
+            delta_space.append(s_begin)
 
-            #
-            time_elapsed = 0
-            t_begin = time.time()
-            data.v_time_elapsed.append(t_begin)
+
+            delta_time = []
+            total_time = 0
+            t_begin = rospy.Time.now()
+            delta_time.append(t_begin)
 
             # loop
-            k = 0
+            step = 0
             while not rospy.is_shutdown():
-                # self.rate.sleep()
 
-		        # update localization error
-            	(trans,rot) = self.tf_listener.lookupTransform('/map', '/odom', rospy.Time(0))
-                p = PoseStamped(
-                    Header(k,rospy.Time(0),'/map'), PoseStamped(
-                    Point(trans[0],trans[1],trans[2]),
-                    Quaternion(rot[0],rot[1],rot[2],rot[3])))
-                data.odom.append(p)
+                ps = PoseStamped(Header(step,rospy.Time.now(),"/map"),self.robot_pose)
+                path_executed.poses.append(ps)
 
                 # update space
-                s_now = self.actual_robot_position
-                space_elapsed += math.sqrt(pow((s_now.x - s_begin.x), 2)+
-                                           pow((s_now.y - s_begin.y), 2))
+                s_now = self.robot_pose.position
+                delta_space.append(math.sqrt(
+                    pow((s_now.x - s_begin.x), 2)+
+                    pow((s_now.y - s_begin.y), 2)))
+                total_space += delta_space[-1]
                 s_begin = s_now;
-                data.v_space_elapsed.append(s_begin)
-                self.bag.write('position', self.actual_robot_position)
-
 
                 # update time
-                t_now = time.time()
-                t_elapsed = t_now - t_begin
-                time_elapsed = t_elapsed
-                # t_begin = t_now;
-                data.v_time_elapsed.append(time_elapsed)
+                t_now = rospy.Time.now()
+                delta_time.append(t_now - t_begin)
+                total_time += delta_time[-1].to_sec()
+                t_begin = t_now;
 
                 # check space restriction
-                space_max = data.space_min*self.space_factor_tolerance
-                if(space_elapsed > space_max):
+                if(total_space > space_max):
                     self.experiment_finished = True
                     self.status = Status.SPACE_EXCEEDED
 
                 # check time restriction
-                time_max = data.time_min*self.time_factor_tolerance
-                if(time_elapsed > time_max):
+                if(total_time > time_max):
                     self.experiment_finished = True
                     self.status = Status.TIME_EXCEEDED
+
+                # bag
+                self.bag.write('/clock', self.clock)
+                self.bag.write('/tf', self.tf)
+                # self.bag.write('/path_executed', path_executed)
+                # self.bag.write('/base_scan_front', self.bsf)
+                # self.bag.write('/base_scan_back', self.bsb)
+                # self.bag.write('/xtion/depth/points', self.pc)
 
                 # break
                 if(self.experiment_finished):
                      break
 
-                k = k+1
+                # step increment
+                step = step+1
 
-            # set pos info
-            data.space_elapsed = space_elapsed
-            data.time_elapsed = time_elapsed
-            data.status = self.status
 
-            # print pos info
-            rospy.loginfo('Space elapsed: ' + str(data.space_elapsed) + ' meters')
-            rospy.loginfo('Time elapsed: ' + str(data.time_elapsed) + ' seconds')
-            rospy.loginfo('Status: ' + data.status.name)
-
-            # finish
-            rospy.loginfo('Finish experiment ' + str(i+1) + '/' + str(self.max_experiments) + '\n')
+            # close bag
+            self.bag.write('/path_executed', path_executed)
             self.bag.close()
+
+            # log
+            rospy.loginfo('Space elapsed: ' + str(total_space) + ' meters')
+            rospy.loginfo('Time elapsed: ' + str(total_time) + ' seconds')
+            rospy.loginfo('Status: ' + self.status.name)
+            rospy.loginfo('Finish experiment ' + str(i+1) + '/' + str(self.max_experiments))
+            print ('')
 
             # stop tracking end cancel finished move_base goal
             self.move_base.cancel_all_goals()
             self.move_base.stop_tracking_goal();
+            self.rate.sleep()
 
 
 if __name__ == '__main__':

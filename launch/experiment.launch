@@ -6,6 +6,7 @@
 
   <arg name="use_fake_localization" default="false"/>
   <arg name="local_planner"         default="eband_local_planner/EBandPlannerROS"/>
+  <arg name="observation_sources"   default="laser_scan_back_observation"/>
 
   <param name="max_experiments"     value="10"/>
   <param name="path_bags_storage"   value=""/>
@@ -19,7 +20,11 @@
     <arg name="map_name"              default="$(arg map_name)"/>
     <arg name="use_fake_localization" default="$(arg use_fake_localization)"/>
     <arg name="local_planner"         default="$(arg local_planner)"/>
+    <arg name="observation_sources"   default="$(arg observation_sources)"/>
     <arg name="enable_description"    default="false"/>
+    <arg name="enable_map"            default="true"/>
+    <arg name="enable_localization"   default="true"/>
+    <arg name="enable_navigation"     default="true"/>
   </include>
 
   <!-- social_experiments -->
@@ -35,7 +40,6 @@
     <param name="path_img_freecells_start" value="$(find social_experiments)/config/map/$(arg map_name)/freecells_start.png"/>
     <param name="path_img_freecells_goal"  value="$(find social_experiments)/config/map/$(arg map_name)/freecells_goal.png"/>
   </node>
-
 
   <node name="move_base_logger" pkg="rosservice" type="rosservice"
     args="call /move_base/set_logger_level {'logger: '''ros''',level: '''fatal''' '}" />
