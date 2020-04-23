@@ -11,3 +11,7 @@ reduzir tamanho das bags
 add verificação de colisão
 parametro para velocidade maxima e relaxamento de posição e angulo
 pegar pontos de start e goal do world file
+
+trocar de mapa no mesmo script
+
+rever pesos e distribuição de massa do robô

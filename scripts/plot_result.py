@@ -54,10 +54,10 @@ for dir in dirs:
 
     v_xlabels.append(dir.replace('_', '\n') + '\n (' + format(SUCCESS, '.2f') + '%)')
 
-    v_space_mean.append(space_coef_success.mean())
-    v_space_std.append(space_coef_success.std())
-    v_time_mean.append(time_coef_success.mean())
-    v_time_std.append(time_coef_success.std())
+    v_space_mean.append(space_coef_success.mean() if(len(space_coef_success) > 0) else 0)
+    v_space_std.append(space_coef_success.std() if(len(space_coef_success) > 0) else 0)
+    v_time_mean.append(time_coef_success.mean() if(len(time_coef_success) > 0) else 0)
+    v_time_std.append(time_coef_success.std() if(len(time_coef_success) > 0) else 0)
 
     v_SUCCESS.append(format(SUCCESS, '.2f') + '\%')
     v_SPACE_EXCEEDED.append(format(SPACE_EXCEEDED, '.2f') + '\%')
@@ -77,7 +77,8 @@ for dir in dirs:
     ax0 = plt.subplot(2, 1, 1)
     plt.ylim(-0.05, 1.2)
     sns.swarmplot(x=result.i, y=time_coef, hue='status', data=result)
-    sns.lineplot(x=result.i-1, y=time_coef_success.mean(), dashes=True)
+    t_mean = time_coef_success.mean() if(len(time_coef_success) > 0) else 0
+    sns.lineplot(x=result.i-1, y=t_mean, dashes=True)
     ax0.set(ylabel='Time coeficience')
     ax0.set(xlabel='')
     ax0.get_legend().remove()
@@ -86,7 +87,8 @@ for dir in dirs:
     ax1 = plt.subplot(2, 1, 2)
     plt.ylim(-0.05, 1.2)
     sns.swarmplot(x=result.i, y=space_coef, hue='status', data=result)
-    sns.lineplot(x=result.i-1, y=space_coef_success.mean(), linestyle='--')
+    s_mean = space_coef_success.mean() if(len(space_coef_success) > 0) else 0
+    sns.lineplot(x=result.i-1, y=s_mean, linestyle='--')
     ax1.set(ylabel='Space coeficience')
     ax1.set(xlabel='Experiment ID')
     plt.legend(loc='lower center')
@@ -114,7 +116,7 @@ fig = plt.gcf()
 DPI = fig.get_dpi()
 fig.set_size_inches(1626.0/float(DPI),887.0/float(DPI))
 
-plt.savefig(path+'/all.png')
+plt.savefig(path+'all.png')
 # plt.show()
 
 

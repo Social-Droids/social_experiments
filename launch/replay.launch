@@ -20,11 +20,11 @@
   </include>
 
   <!-- play bag gui -->
-  <node name="rqt_bag" pkg="rqt_bag" type="rqt_bag" output="screen"
-    args="$(arg bag)"/>
+  <!-- <node name="rqt_bag" pkg="rqt_bag" type="rqt_bag" output="screen"
+    args="$(arg bag)"/> -->
 
   <!-- play bag -->
-  <!-- <node pkg="rosbag" type="play" name="player" output="screen"
-    args="- -clock - -pause $(arg bag)"/> -->
+  <node pkg="rosbag" type="play" name="player" output="screen"
+    args="--pause --loop $(arg bag)"/>
 
 </launch>

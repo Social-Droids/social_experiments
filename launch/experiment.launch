@@ -28,7 +28,7 @@
   </include>
 
   <!-- social_experiments -->
-  <node name="social_experiments" pkg="social_experiments" type="experiments.py"
+  <node name="social_experiments" pkg="social_experiments" type="social_experiments_node.py"
     output="screen" required="true">
     <param name="world_model_name"  value="$(arg map_name)"/>
     <param name="robot_model_name"  value="$(arg robot_name)"/>
@@ -39,6 +39,12 @@
     <param name="time_factor_tolerance"    value="5"/>
     <param name="path_img_freecells_start" value="$(find social_experiments)/config/map/$(arg map_name)/freecells_start.png"/>
     <param name="path_img_freecells_goal"  value="$(find social_experiments)/config/map/$(arg map_name)/freecells_goal.png"/>
+  </node>
+
+  <!-- check robot collisions-->
+  <node name="hera_check_collision" pkg="hera_description" type="hera_check_collision" output="screen">
+    <param name="world_name" value="default"/>
+    <param name="robot_name" value="$(arg robot_name)"/>
   </node>
 
   <node name="move_base_logger" pkg="rosservice" type="rosservice"

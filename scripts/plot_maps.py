@@ -6,6 +6,7 @@ import pandas as pd
 import numpy as np
 import yaml
 import os
+import sys
 import json
 
 # new colormap
@@ -16,7 +17,7 @@ my_cmap = ListedColormap(my_cmap)
 
 sns.set(style="whitegrid")
 
-path = 'results'
+path = sys.argv[1]
 
 dirs = [ name for name in os.listdir(path) if os.path.isdir(os.path.join(path, name)) ]
 
@@ -31,11 +32,11 @@ for dir in dirs:
 
     result= pd.read_csv(path+'/'+dir+'/result.csv')
     params = yaml.load(open(path+'/'+dir+'/params.yaml', "r"))
-    localization_error = json.loads(open(path+'/'+dir+'/localization_error.json').read())
-    path_min_x = json.loads(open(path+'/'+dir+'/path_min_x.json').read())
-    path_min_y = json.loads(open(path+'/'+dir+'/path_min_y.json').read())
-    path_elapsed_x = json.loads(open(path+'/'+dir+'/path_elapsed_x.json').read())
-    path_elapsed_y = json.loads(open(path+'/'+dir+'/path_elapsed_y.json').read())
+    # localization_error = json.loads(open(path+'/'+dir+'/localization_error.json').read())
+    path_min_x = json.loads(open(path+'/'+dir+'/path_plan_x.json').read())
+    path_min_y = json.loads(open(path+'/'+dir+'/path_plan_y.json').read())
+    path_elapsed_x = json.loads(open(path+'/'+dir+'/path_executed_x.json').read())
+    path_elapsed_y = json.loads(open(path+'/'+dir+'/path_executed_y.json').read())
 
 ################################################################################
 
@@ -57,7 +58,7 @@ for dir in dirs:
         path_min = np.zeros((a,b,4))
         path_elapsed = np.zeros((a,b,4))
 
-        values_le = localization_error[str(experiment_id)]
+        # values_le = localization_error[str(experiment_id)]
 
         values_pmx = path_min_x[str(experiment_id)]
         values_pmy = path_min_y[str(experiment_id)]
@@ -103,6 +104,6 @@ for dir in dirs:
 
 
 
-	plt.clf()
-	sns.lineplot(x=range(0,len(values_le)), y=values_le, palette="tab10", linewidth=2.5)
-	plt.savefig(path+'/'+dir+"/error/"+str(experiment_id+1)+".png")
+    # plt.clf()
+    # sns.lineplot(x=range(0,len(values_le)), y=values_le, palette="tab10", linewidth=2.5)
+    # plt.savefig(path+'/'+dir+"/error/"+str(experiment_id+1)+".png")
