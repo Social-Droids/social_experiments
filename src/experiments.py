@@ -6,7 +6,7 @@ import math
 import time
 import rospy
 import numpy
-import rosbag
+# import rosbag
 import random
 import actionlib
 from PIL import Image
@@ -34,6 +34,7 @@ from nav_msgs.msg import Path
 from nav_msgs.srv import GetPlan
 from std_msgs.msg import Header
 from std_msgs.msg import String
+from std_msgs.msg import Float32
 from std_srvs.srv import Empty
 from tf2_msgs.msg import TFMessage
 from rosgraph_msgs.msg import Clock
@@ -58,6 +59,8 @@ class Data():
 
         # pos experiment info
         self.status = None
+        self.factor_array = []
+        self.path_executed = []
         self.delta_space = []
         self.delta_time = []
         self.total_space = None
@@ -77,7 +80,6 @@ class Experiments():
         self.freecells_start = []
         self.freecells_goal = []
         #
-        # self.bag = None
         self.clock = None
         self.tf = []
         self.robot_pose = None
@@ -88,6 +90,7 @@ class Experiments():
         self.experiment_finished = False
         self.robot_updated = False
         self.status = Status.NONE
+        self.factor = None
 
         # publishers
         self.pub_initpose = rospy.Publisher('/initialpose', PoseWithCovarianceStamped, queue_size=10)
@@ -99,6 +102,7 @@ class Experiments():
         rospy.Subscriber('/tf', TFMessage, self.tf_callback)
         rospy.Subscriber('/clock', Clock, self.clock_callback)
         rospy.Subscriber('/collision', String, self.collision_callback)
+        rospy.Subscriber('/real_time_factor', Float32, self.factor_callback)
         # rospy.Subscriber('/map', OccupancyGrid, self.map1_callback)
         # rospy.Subscriber('/move_base/global_costmap/costmap', OccupancyGrid, self.map2_callback)
         # rospy.Subscriber('/base_scan_front', LaserScan, self.bsf_callback)
@@ -166,6 +170,10 @@ class Experiments():
         # rospy.loginfo('Collision detected with ' + msg.data)
         self.status = Status.COLLISION
         self.experiment_finished = True
+
+    def factor_callback(self, msg):
+        # rospy.loginfo('Real time factor: ' + str(msg.data))
+        self.factor = msg.data
 
     # def bsf_callback(self, data):
     #     self.bsf = data
@@ -292,7 +300,7 @@ class Experiments():
     def get_clock(self):
         return self.clock
 
-    def start(self, data, bag):
+    def start(self, data):
 
             # Waiting for robot update
             rospy.loginfo('Waiting for robot update...')
@@ -322,16 +330,25 @@ class Experiments():
             delta_space = []
             total_space = 0
             s_begin = data.start.pose.position
-            delta_space.append(s_begin)
+            delta_space.append(0)
+            path_executed = []
+            path_executed.append(s_begin)
 
             delta_time = []
             total_time = 0
             t_begin = rospy.Time.now()
             delta_time.append(t_begin)
 
+            factor_array = []
+            factor_array.append(self.factor)
+
+
             # loop
             step = 0
             while not rospy.is_shutdown():
+                self.rate.sleep()
+
+                factor_array.append(self.factor)
 
                 # update space
                 s_now = self.robot_pose.position
@@ -340,6 +357,7 @@ class Experiments():
                     pow((s_now.y - s_begin.y), 2)))
                 total_space += delta_space[-1]
                 s_begin = s_now;
+                path_executed.append(s_begin)
 
                 # update time
                 t_now = rospy.Time.now()
@@ -357,13 +375,13 @@ class Experiments():
                     self.experiment_finished = True
                     self.status = Status.TIME_EXCEEDED
 
-                # bag
-                bag.write('/clock', self.clock)
-                bag.write('/tf', self.tf)
-                # self.bag.write('/path_executed', path_executed)
-                # self.bag.write('/base_scan_front', self.bsf)
-                # self.bag.write('/base_scan_back', self.bsb)
-                # self.bag.write('/xtion/depth/points', self.pc)
+                # # bag
+                # bag.write('/clock', self.clock)
+                # bag.write('/tf', self.tf)
+                # # self.bag.write('/path_executed', path_executed)
+                # # self.bag.write('/base_scan_front', self.bsf)
+                # # self.bag.write('/base_scan_back', self.bsb)
+                # # self.bag.write('/xtion/depth/points', self.pc)
 
                 # break
                 if(self.experiment_finished):
@@ -378,6 +396,10 @@ class Experiments():
             self.rate.sleep()
 
             #
+            data.factor_array = factor_array
+            data.path_executed = path_executed
+            data.delta_space = delta_space
+            data.delta_time = delta_time
             data.total_space = total_space
             data.total_time = total_time
             data.status = self.status.name

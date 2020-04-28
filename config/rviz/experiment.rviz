@@ -22,7 +22,8 @@ Panels:
     Help Height: 75
     Name: Displays
     Property Tree Widget:
-      Expanded: ~
+      Expanded:
+        - /TF1/Frames1
       Splitter Ratio: 0.5
     Tree Height: 419
 Preferences:
@@ -311,6 +312,36 @@ Visualization Manager:
           Size (m): 0.10000000149011612
           Style: Flat Squares
           Topic: /base_scan_back
+          Unreliable: false
+          Use Fixed Frame: true
+          Use rainbow: true
+          Value: true
+        - Alpha: 1
+          Autocompute Intensity Bounds: true
+          Autocompute Value Bounds:
+            Max Value: 10
+            Min Value: -10
+            Value: true
+          Axis: Z
+          Channel Name: intensity
+          Class: rviz/PointCloud2
+          Color: 255; 255; 255
+          Color Transformer: RGB8
+          Decay Time: 0
+          Enabled: true
+          Invert Rainbow: false
+          Max Color: 255; 255; 255
+          Max Intensity: 4096
+          Min Color: 0; 0; 0
+          Min Intensity: 0
+          Name: cloud_front
+          Position Transformer: XYZ
+          Queue Size: 10
+          Selectable: true
+          Size (Pixels): 3
+          Size (m): 0.009999999776482582
+          Style: Flat Squares
+          Topic: /xtion/depth/points
           Unreliable: false
           Use Fixed Frame: true
           Use rainbow: true
@@ -712,7 +743,7 @@ Visualization Manager:
       Marker Topic: /freecells_start
       Name: Freecells_start
       Namespaces:
-        "": true
+        {}
       Queue Size: 100
       Value: true
     - Class: rviz/MarkerArray
@@ -720,7 +751,7 @@ Visualization Manager:
       Marker Topic: /freecells_goal
       Name: Freecells_goal
       Namespaces:
-        "": true
+        {}
       Queue Size: 100
       Value: true
   Enabled: true
@@ -766,7 +797,7 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.7853000164031982
+      Pitch: 0.6897963285446167
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
       Yaw: 3.1414999961853027
