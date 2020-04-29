@@ -90,7 +90,7 @@ class Experiments():
         self.experiment_finished = False
         self.robot_updated = False
         self.status = Status.NONE
-        self.factor = None
+        self.factor = 0
 
         # publishers
         self.pub_initpose = rospy.Publisher('/initialpose', PoseWithCovarianceStamped, queue_size=10)
