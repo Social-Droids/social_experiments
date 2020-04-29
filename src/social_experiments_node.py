@@ -149,7 +149,6 @@ class SocialExperimentsNode():
         for e1 in self.data:
             list_x = []
             list_y = []
-            print len(e1.path_executed)
             for e2 in e1.path_executed:
                 list_x.append(e2.x)
                 list_y.append(e2.y)
