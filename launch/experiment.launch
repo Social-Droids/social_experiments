@@ -6,8 +6,11 @@
   <arg name="robot_name"            default="robot"/>
 
   <arg name="use_fake_localization" default="false"/>
-  <arg name="local_planner"         default="eband_local_planner/EBandPlannerROS"/>
+  <arg name="global_planner"        default="navfn/NavfnROS"/>
+  <arg name="local_planner"         default="base_local_planner/TrajectoryPlannerROS"/>
   <arg name="observation_sources"   default="laser_scan_back_observation"/>
+  <arg name="xy_goal_tolerance"     default="0.1"/>
+  <arg name="yaw_goal_tolerance"    default="0.05"/>
 
   <param name="max_experiments"     value="10"/>
   <param name="path_storage"        value=""/>
@@ -29,8 +32,11 @@
   <include file="$(find hera_bringup)/launch/bring_up.launch" >
     <arg name="map_name"              default="$(arg map_name)"/>
     <arg name="use_fake_localization" default="$(arg use_fake_localization)"/>
+    <arg name="global_planner"        default="$(arg global_planner)"/>
     <arg name="local_planner"         default="$(arg local_planner)"/>
     <arg name="observation_sources"   default="$(arg observation_sources)"/>
+    <arg name="xy_goal_tolerance"     default="$(arg xy_goal_tolerance)"/>
+    <arg name="yaw_goal_tolerance"    default="$(arg yaw_goal_tolerance)"/>
     <arg name="enable_description"    default="false"/>
     <arg name="enable_map"            default="true"/>
     <arg name="enable_localization"   default="true"/>
@@ -62,7 +68,7 @@
     <param name="world_name" value="default"/>
   </node>
 
-  <node name="move_base_logger" pkg="rosservice" type="rosservice"
-    args="call /move_base/set_logger_level {'logger: '''ros''',level: '''fatal''' '}" />
+  <!-- <node name="move_base_logger" pkg="rosservice" type="rosservice"
+    args="call /move_base/set_logger_level {'logger: '''ros''',level: '''fatal''' '}" /> -->
 
 </launch>

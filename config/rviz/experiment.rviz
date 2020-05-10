@@ -11,6 +11,7 @@ Panels:
   - Class: rviz/Views
     Expanded:
       - /Current View1
+      - /Orbit1/Focal Point1
     Name: Views
     Splitter Ratio: 0.5
   - Class: rviz/Time
@@ -24,7 +25,8 @@ Panels:
     Property Tree Widget:
       Expanded:
         - /TF1/Frames1
-      Splitter Ratio: 0.5
+        - /Navigation1
+      Splitter Ratio: 0.5694444179534912
     Tree Height: 419
 Preferences:
   PromptSaveOnExit: true
@@ -132,22 +134,6 @@ Visualization Manager:
                       {}
       Update Interval: 0
       Value: true
-    - Alpha: 1
-      Class: rviz/RobotModel
-      Collision Enabled: false
-      Enabled: false
-      Links:
-        All Links Enabled: true
-        Expand Joint Details: false
-        Expand Link Details: false
-        Expand Tree: false
-        Link Tree Style: Links in Alphabetic Order
-      Name: Environment
-      Robot Description: world/robot_description
-      TF Prefix: ""
-      Update Interval: 0
-      Value: false
-      Visual Enabled: true
     - Alpha: 0.699999988079071
       Class: rviz/Map
       Color Scheme: map
@@ -334,7 +320,7 @@ Visualization Manager:
           Max Intensity: 4096
           Min Color: 0; 0; 0
           Min Intensity: 0
-          Name: cloud_front
+          Name: cloud_base_front
           Position Transformer: XYZ
           Queue Size: 10
           Selectable: true
@@ -342,6 +328,36 @@ Visualization Manager:
           Size (m): 0.009999999776482582
           Style: Flat Squares
           Topic: /xtion/depth/points
+          Unreliable: false
+          Use Fixed Frame: true
+          Use rainbow: true
+          Value: true
+        - Alpha: 1
+          Autocompute Intensity Bounds: true
+          Autocompute Value Bounds:
+            Max Value: 10
+            Min Value: -10
+            Value: true
+          Axis: Z
+          Channel Name: intensity
+          Class: rviz/PointCloud2
+          Color: 255; 255; 255
+          Color Transformer: RGB8
+          Decay Time: 0
+          Enabled: true
+          Invert Rainbow: false
+          Max Color: 255; 255; 255
+          Max Intensity: 4096
+          Min Color: 0; 0; 0
+          Min Intensity: 0
+          Name: cloud_torso_front
+          Position Transformer: XYZ
+          Queue Size: 10
+          Selectable: true
+          Size (Pixels): 3
+          Size (m): 0.009999999776482582
+          Style: Flat Squares
+          Topic: /kinect_one/depth/points
           Unreliable: false
           Use Fixed Frame: true
           Use rainbow: true
@@ -402,6 +418,38 @@ Visualization Manager:
       Displays:
         - Class: rviz/Group
           Displays:
+            - Alpha: 0.699999988079071
+              Class: rviz/Map
+              Color Scheme: costmap
+              Draw Behind: false
+              Enabled: true
+              Name: Map global
+              Topic: /move_base/global_costmap/costmap
+              Unreliable: false
+              Use Timestamp: false
+              Value: true
+            - Alpha: 0.699999988079071
+              Class: rviz/Map
+              Color Scheme: costmap
+              Draw Behind: false
+              Enabled: true
+              Name: Map local
+              Topic: /move_base/local_costmap/costmap
+              Unreliable: false
+              Use Timestamp: false
+              Value: true
+          Enabled: true
+          Name: Costmap
+        - Class: rviz/Group
+          Displays:
+            - Alpha: 1
+              Class: rviz/Polygon
+              Color: 25; 255; 0
+              Enabled: true
+              Name: Global footprint
+              Topic: /move_base/global_costmap/footprint
+              Unreliable: false
+              Value: true
             - Alpha: 1
               Buffer Length: 1
               Class: rviz/Path
@@ -410,9 +458,9 @@ Visualization Manager:
               Head Diameter: 0.30000001192092896
               Head Length: 0.20000000298023224
               Length: 0.30000001192092896
-              Line Style: Billboards
+              Line Style: Lines
               Line Width: 0.029999999329447746
-              Name: Path global
+              Name: GlobalPlanner
               Offset:
                 X: 0
                 Y: 0
@@ -425,287 +473,252 @@ Visualization Manager:
               Topic: /move_base/TrajectoryPlannerROS/global_plan
               Unreliable: false
               Value: true
-            - Alpha: 1
-              Buffer Length: 1
-              Class: rviz/Path
-              Color: 25; 255; 0
-              Enabled: true
-              Head Diameter: 0.30000001192092896
-              Head Length: 0.20000000298023224
-              Length: 0.30000001192092896
-              Line Style: Billboards
-              Line Width: 0.029999999329447746
-              Name: Path local
-              Offset:
-                X: 0
-                Y: 0
-                Z: 0
-              Pose Color: 255; 85; 255
-              Pose Style: None
-              Radius: 0.029999999329447746
-              Shaft Diameter: 0.10000000149011612
-              Shaft Length: 0.10000000149011612
-              Topic: /move_base/TrajectoryPlannerROS/local_plan
-              Unreliable: false
-              Value: true
           Enabled: true
-          Name: Base
+          Name: Global planner
         - Class: rviz/Group
           Displays:
             - Alpha: 1
-              Buffer Length: 1
-              Class: rviz/Path
+              Class: rviz/Polygon
               Color: 25; 255; 0
               Enabled: true
-              Head Diameter: 0.30000001192092896
-              Head Length: 0.20000000298023224
-              Length: 0.30000001192092896
-              Line Style: Billboards
-              Line Width: 0.029999999329447746
-              Name: Path global
-              Offset:
-                X: 0
-                Y: 0
-                Z: 0
-              Pose Color: 255; 85; 255
-              Pose Style: None
-              Radius: 0.029999999329447746
-              Shaft Diameter: 0.10000000149011612
-              Shaft Length: 0.10000000149011612
-              Topic: /move_base/DWAPlannerROS/global_plan
+              Name: Local footprint
+              Topic: /move_base/local_costmap/footprint
               Unreliable: false
               Value: true
-            - Alpha: 1
-              Buffer Length: 1
-              Class: rviz/Path
-              Color: 25; 255; 0
+            - Class: rviz/Group
+              Displays:
+                - Alpha: 1
+                  Buffer Length: 1
+                  Class: rviz/Path
+                  Color: 25; 255; 0
+                  Enabled: true
+                  Head Diameter: 0.30000001192092896
+                  Head Length: 0.20000000298023224
+                  Length: 0.30000001192092896
+                  Line Style: Billboards
+                  Line Width: 0.029999999329447746
+                  Name: Path global
+                  Offset:
+                    X: 0
+                    Y: 0
+                    Z: 0
+                  Pose Color: 255; 85; 255
+                  Pose Style: None
+                  Radius: 0.029999999329447746
+                  Shaft Diameter: 0.10000000149011612
+                  Shaft Length: 0.10000000149011612
+                  Topic: /move_base/TrajectoryPlannerROS/global_plan
+                  Unreliable: false
+                  Value: true
+                - Alpha: 1
+                  Buffer Length: 1
+                  Class: rviz/Path
+                  Color: 25; 255; 0
+                  Enabled: true
+                  Head Diameter: 0.30000001192092896
+                  Head Length: 0.20000000298023224
+                  Length: 0.30000001192092896
+                  Line Style: Billboards
+                  Line Width: 0.029999999329447746
+                  Name: Path local
+                  Offset:
+                    X: 0
+                    Y: 0
+                    Z: 0
+                  Pose Color: 255; 85; 255
+                  Pose Style: None
+                  Radius: 0.029999999329447746
+                  Shaft Diameter: 0.10000000149011612
+                  Shaft Length: 0.10000000149011612
+                  Topic: /move_base/TrajectoryPlannerROS/local_plan
+                  Unreliable: false
+                  Value: true
               Enabled: true
-              Head Diameter: 0.30000001192092896
-              Head Length: 0.20000000298023224
-              Length: 0.30000001192092896
-              Line Style: Billboards
-              Line Width: 0.029999999329447746
-              Name: Path local
-              Offset:
-                X: 0
-                Y: 0
-                Z: 0
-              Pose Color: 255; 85; 255
-              Pose Style: None
-              Radius: 0.029999999329447746
-              Shaft Diameter: 0.10000000149011612
-              Shaft Length: 0.10000000149011612
-              Topic: /move_base/DWAPlannerROS/local_plan
-              Unreliable: false
-              Value: true
-          Enabled: true
-          Name: DWA
-        - Class: rviz/Group
-          Displays:
-            - Alpha: 1
-              Buffer Length: 1
-              Class: rviz/Path
-              Color: 25; 255; 0
+              Name: Base
+            - Class: rviz/Group
+              Displays:
+                - Alpha: 1
+                  Buffer Length: 1
+                  Class: rviz/Path
+                  Color: 25; 255; 0
+                  Enabled: true
+                  Head Diameter: 0.30000001192092896
+                  Head Length: 0.20000000298023224
+                  Length: 0.30000001192092896
+                  Line Style: Billboards
+                  Line Width: 0.029999999329447746
+                  Name: Path global
+                  Offset:
+                    X: 0
+                    Y: 0
+                    Z: 0
+                  Pose Color: 255; 85; 255
+                  Pose Style: None
+                  Radius: 0.029999999329447746
+                  Shaft Diameter: 0.10000000149011612
+                  Shaft Length: 0.10000000149011612
+                  Topic: /move_base/DWAPlannerROS/global_plan
+                  Unreliable: false
+                  Value: true
+                - Alpha: 1
+                  Buffer Length: 1
+                  Class: rviz/Path
+                  Color: 25; 255; 0
+                  Enabled: true
+                  Head Diameter: 0.30000001192092896
+                  Head Length: 0.20000000298023224
+                  Length: 0.30000001192092896
+                  Line Style: Billboards
+                  Line Width: 0.029999999329447746
+                  Name: Path local
+                  Offset:
+                    X: 0
+                    Y: 0
+                    Z: 0
+                  Pose Color: 255; 85; 255
+                  Pose Style: None
+                  Radius: 0.029999999329447746
+                  Shaft Diameter: 0.10000000149011612
+                  Shaft Length: 0.10000000149011612
+                  Topic: /move_base/DWAPlannerROS/local_plan
+                  Unreliable: false
+                  Value: true
               Enabled: true
-              Head Diameter: 0.30000001192092896
-              Head Length: 0.20000000298023224
-              Length: 0.30000001192092896
-              Line Style: Billboards
-              Line Width: 0.029999999329447746
-              Name: Path global
-              Offset:
-                X: 0
-                Y: 0
-                Z: 0
-              Pose Color: 255; 85; 255
-              Pose Style: None
-              Radius: 0.029999999329447746
-              Shaft Diameter: 0.10000000149011612
-              Shaft Length: 0.10000000149011612
-              Topic: /move_base/EBandPlannerROS/global_plan
-              Unreliable: false
-              Value: true
-            - Alpha: 1
-              Buffer Length: 1
-              Class: rviz/Path
-              Color: 25; 255; 0
+              Name: DWA
+            - Class: rviz/Group
+              Displays:
+                - Alpha: 1
+                  Buffer Length: 1
+                  Class: rviz/Path
+                  Color: 25; 255; 0
+                  Enabled: true
+                  Head Diameter: 0.30000001192092896
+                  Head Length: 0.20000000298023224
+                  Length: 0.30000001192092896
+                  Line Style: Billboards
+                  Line Width: 0.029999999329447746
+                  Name: Path global
+                  Offset:
+                    X: 0
+                    Y: 0
+                    Z: 0
+                  Pose Color: 255; 85; 255
+                  Pose Style: None
+                  Radius: 0.029999999329447746
+                  Shaft Diameter: 0.10000000149011612
+                  Shaft Length: 0.10000000149011612
+                  Topic: /move_base/EBandPlannerROS/global_plan
+                  Unreliable: false
+                  Value: true
+                - Alpha: 1
+                  Buffer Length: 1
+                  Class: rviz/Path
+                  Color: 25; 255; 0
+                  Enabled: true
+                  Head Diameter: 0.30000001192092896
+                  Head Length: 0.20000000298023224
+                  Length: 0.30000001192092896
+                  Line Style: Billboards
+                  Line Width: 0.029999999329447746
+                  Name: Path local
+                  Offset:
+                    X: 0
+                    Y: 0
+                    Z: 0
+                  Pose Color: 255; 85; 255
+                  Pose Style: None
+                  Radius: 0.029999999329447746
+                  Shaft Diameter: 0.10000000149011612
+                  Shaft Length: 0.10000000149011612
+                  Topic: /move_base/EBandPlannerROS/local_plan
+                  Unreliable: false
+                  Value: true
+                - Class: rviz/Marker
+                  Enabled: true
+                  Marker Topic: /move_base/EBandPlannerROS/eband_visualization
+                  Name: Marker
+                  Namespaces:
+                    bubbles: true
+                  Queue Size: 100
+                  Value: true
               Enabled: true
-              Head Diameter: 0.30000001192092896
-              Head Length: 0.20000000298023224
-              Length: 0.30000001192092896
-              Line Style: Billboards
-              Line Width: 0.029999999329447746
-              Name: Path local
-              Offset:
-                X: 0
-                Y: 0
-                Z: 0
-              Pose Color: 255; 85; 255
-              Pose Style: None
-              Radius: 0.029999999329447746
-              Shaft Diameter: 0.10000000149011612
-              Shaft Length: 0.10000000149011612
-              Topic: /move_base/EBandPlannerROS/local_plan
-              Unreliable: false
-              Value: true
-            - Class: rviz/Marker
-              Enabled: false
-              Marker Topic: /move_base/EBandPlannerROS/eband_visualization
-              Name: Marker
-              Namespaces:
-                {}
-              Queue Size: 100
-              Value: false
-          Enabled: true
-          Name: EBand
-        - Class: rviz/Group
-          Displays:
-            - Alpha: 1
-              Buffer Length: 1
-              Class: rviz/Path
-              Color: 25; 255; 0
+              Name: EBand
+            - Class: rviz/Group
+              Displays:
+                - Alpha: 1
+                  Buffer Length: 1
+                  Class: rviz/Path
+                  Color: 25; 255; 0
+                  Enabled: true
+                  Head Diameter: 0.30000001192092896
+                  Head Length: 0.20000000298023224
+                  Length: 0.30000001192092896
+                  Line Style: Lines
+                  Line Width: 0.029999999329447746
+                  Name: Path global
+                  Offset:
+                    X: 0
+                    Y: 0
+                    Z: 0
+                  Pose Color: 255; 85; 255
+                  Pose Style: None
+                  Radius: 0.029999999329447746
+                  Shaft Diameter: 0.10000000149011612
+                  Shaft Length: 0.10000000149011612
+                  Topic: /move_base/TebLocalPlannerROS/global_plan
+                  Unreliable: false
+                  Value: true
+                - Alpha: 1
+                  Buffer Length: 1
+                  Class: rviz/Path
+                  Color: 25; 255; 0
+                  Enabled: true
+                  Head Diameter: 0.30000001192092896
+                  Head Length: 0.20000000298023224
+                  Length: 0.30000001192092896
+                  Line Style: Lines
+                  Line Width: 0.029999999329447746
+                  Name: Path Local
+                  Offset:
+                    X: 0
+                    Y: 0
+                    Z: 0
+                  Pose Color: 255; 85; 255
+                  Pose Style: None
+                  Radius: 0.029999999329447746
+                  Shaft Diameter: 0.10000000149011612
+                  Shaft Length: 0.10000000149011612
+                  Topic: /move_base/TebLocalPlannerROS/local_plan
+                  Unreliable: false
+                  Value: true
+                - Class: rviz/Marker
+                  Enabled: true
+                  Marker Topic: /move_base/TebLocalPlannerROS/teb_markers
+                  Name: Marker
+                  Namespaces:
+                    {}
+                  Queue Size: 100
+                  Value: true
+                - Alpha: 1
+                  Arrow Length: 0.30000001192092896
+                  Axes Length: 0.30000001192092896
+                  Axes Radius: 0.009999999776482582
+                  Class: rviz/PoseArray
+                  Color: 255; 25; 0
+                  Enabled: true
+                  Head Length: 0.07000000029802322
+                  Head Radius: 0.029999999329447746
+                  Name: PoseArray
+                  Shaft Length: 0.23000000417232513
+                  Shaft Radius: 0.009999999776482582
+                  Shape: Arrow (Flat)
+                  Topic: /move_base/TebLocalPlannerROS/teb_poses
+                  Unreliable: false
+                  Value: true
               Enabled: true
-              Head Diameter: 0.30000001192092896
-              Head Length: 0.20000000298023224
-              Length: 0.30000001192092896
-              Line Style: Lines
-              Line Width: 0.029999999329447746
-              Name: Path global
-              Offset:
-                X: 0
-                Y: 0
-                Z: 0
-              Pose Color: 255; 85; 255
-              Pose Style: None
-              Radius: 0.029999999329447746
-              Shaft Diameter: 0.10000000149011612
-              Shaft Length: 0.10000000149011612
-              Topic: /move_base/TebLocalPlannerROS/global_plan
-              Unreliable: false
-              Value: true
-            - Alpha: 1
-              Buffer Length: 1
-              Class: rviz/Path
-              Color: 25; 255; 0
-              Enabled: true
-              Head Diameter: 0.30000001192092896
-              Head Length: 0.20000000298023224
-              Length: 0.30000001192092896
-              Line Style: Lines
-              Line Width: 0.029999999329447746
-              Name: Path Local
-              Offset:
-                X: 0
-                Y: 0
-                Z: 0
-              Pose Color: 255; 85; 255
-              Pose Style: None
-              Radius: 0.029999999329447746
-              Shaft Diameter: 0.10000000149011612
-              Shaft Length: 0.10000000149011612
-              Topic: /move_base/TebLocalPlannerROS/local_plan
-              Unreliable: false
-              Value: true
-            - Class: rviz/Marker
-              Enabled: true
-              Marker Topic: /move_base/TebLocalPlannerROS/teb_markers
-              Name: Marker
-              Namespaces:
-                {}
-              Queue Size: 100
-              Value: true
-            - Alpha: 1
-              Arrow Length: 0.30000001192092896
-              Axes Length: 0.30000001192092896
-              Axes Radius: 0.009999999776482582
-              Class: rviz/PoseArray
-              Color: 255; 25; 0
-              Enabled: true
-              Head Length: 0.07000000029802322
-              Head Radius: 0.029999999329447746
-              Name: PoseArray
-              Shaft Length: 0.23000000417232513
-              Shaft Radius: 0.009999999776482582
-              Shape: Arrow (Flat)
-              Topic: /move_base/TebLocalPlannerROS/teb_poses
-              Unreliable: false
-              Value: true
+              Name: TEB
           Enabled: true
-          Name: TEB
-        - Alpha: 1
-          Axes Length: 1
-          Axes Radius: 0.10000000149011612
-          Class: rviz/Pose
-          Color: 255; 25; 0
-          Enabled: true
-          Head Length: 0.30000001192092896
-          Head Radius: 0.10000000149011612
-          Name: Goal
-          Shaft Length: 1
-          Shaft Radius: 0.05000000074505806
-          Shape: Arrow
-          Topic: /move_base/current_goal
-          Unreliable: false
-          Value: true
-        - Alpha: 1
-          Buffer Length: 1
-          Class: rviz/Path
-          Color: 25; 255; 0
-          Enabled: true
-          Head Diameter: 0.30000001192092896
-          Head Length: 0.20000000298023224
-          Length: 0.30000001192092896
-          Line Style: Lines
-          Line Width: 0.029999999329447746
-          Name: NavfnROS
-          Offset:
-            X: 0
-            Y: 0
-            Z: 0
-          Pose Color: 255; 85; 255
-          Pose Style: None
-          Radius: 0.029999999329447746
-          Shaft Diameter: 0.10000000149011612
-          Shaft Length: 0.10000000149011612
-          Topic: /move_base/NavfnROS/plan
-          Unreliable: false
-          Value: true
-        - Alpha: 0.699999988079071
-          Class: rviz/Map
-          Color Scheme: costmap
-          Draw Behind: false
-          Enabled: true
-          Name: Map global
-          Topic: /move_base/global_costmap/costmap
-          Unreliable: false
-          Use Timestamp: false
-          Value: true
-        - Alpha: 0.699999988079071
-          Class: rviz/Map
-          Color Scheme: costmap
-          Draw Behind: false
-          Enabled: true
-          Name: Map local
-          Topic: /move_base/local_costmap/costmap
-          Unreliable: false
-          Use Timestamp: false
-          Value: true
-        - Alpha: 1
-          Class: rviz/Polygon
-          Color: 25; 255; 0
-          Enabled: true
-          Name: Global footprint
-          Topic: /move_base/global_costmap/footprint
-          Unreliable: false
-          Value: true
-        - Alpha: 1
-          Class: rviz/Polygon
-          Color: 25; 255; 0
-          Enabled: true
-          Name: Local footprint
-          Topic: /move_base/local_costmap/footprint
-          Unreliable: false
-          Value: true
+          Name: Local planner
         - Alpha: 1
           Axes Length: 1
           Axes Radius: 0.10000000149011612
@@ -729,11 +742,26 @@ Visualization Manager:
           Enabled: true
           Head Length: 0.30000001192092896
           Head Radius: 0.10000000149011612
-          Name: Initial pose
+          Name: Start
           Shaft Length: 1
           Shaft Radius: 0.05000000074505806
           Shape: Arrow
           Topic: /initialpose
+          Unreliable: false
+          Value: true
+        - Alpha: 1
+          Axes Length: 1
+          Axes Radius: 0.10000000149011612
+          Class: rviz/Pose
+          Color: 255; 25; 0
+          Enabled: true
+          Head Length: 0.30000001192092896
+          Head Radius: 0.10000000149011612
+          Name: Goal
+          Shaft Length: 1
+          Shaft Radius: 0.05000000074505806
+          Shape: Arrow
+          Topic: /move_base/current_goal
           Unreliable: false
           Value: true
       Enabled: true
@@ -743,7 +771,7 @@ Visualization Manager:
       Marker Topic: /freecells_start
       Name: Freecells_start
       Namespaces:
-        {}
+        "": true
       Queue Size: 100
       Value: true
     - Class: rviz/MarkerArray
@@ -751,7 +779,7 @@ Visualization Manager:
       Marker Topic: /freecells_goal
       Name: Freecells_goal
       Namespaces:
-        {}
+        "": true
       Queue Size: 100
       Value: true
   Enabled: true
@@ -797,11 +825,31 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.6897963285446167
+      Pitch: 0.745864987373352
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 3.1414999961853027
-    Saved: ~
+      Yaw: 3.166599988937378
+    Saved:
+      - Class: rviz/Orbit
+        Distance: 15
+        Enable Stereo Rendering:
+          Stereo Eye Separation: 0.05999999865889549
+          Stereo Focal Distance: 1
+          Swap Stereo Eyes: false
+          Value: false
+        Focal Point:
+          X: -1
+          Y: 0
+          Z: -1
+        Focal Shape Fixed Size: true
+        Focal Shape Size: 0.05000000074505806
+        Invert Z Axis: false
+        Name: Orbit
+        Near Clip Distance: 0.009999999776482582
+        Pitch: 0.6108649969100952
+        Target Frame: <Fixed Frame>
+        Value: Orbit (rviz)
+        Yaw: 3.151599884033203
 Window Geometry:
   Displays:
     collapsed: false

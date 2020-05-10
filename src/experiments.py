@@ -116,9 +116,12 @@ class Experiments():
         rospy.loginfo('Waiting for "/move_base/clear_costmaps" service')
         rospy.wait_for_service('/move_base/clear_costmaps')
         self.clear_costmaps = rospy.ServiceProxy('/move_base/clear_costmaps', Empty)
-        rospy.loginfo('Waiting for "/move_base/NavfnROS/make_plan" service')
-        rospy.wait_for_service('/move_base/NavfnROS/make_plan')
-        self.make_plan = rospy.ServiceProxy('/move_base/NavfnROS/make_plan', GetPlan)
+        # rospy.loginfo('Waiting for "/move_base/NavfnROS/make_plan" service')
+        # rospy.wait_for_service('/move_base/NavfnROS/make_plan')
+        # self.make_plan = rospy.ServiceProxy('/move_base/NavfnROS/make_plan', GetPlan)
+        rospy.loginfo('Waiting for "/move_base/GlobalPlanner/make_plan" service')
+        rospy.wait_for_service('/move_base/GlobalPlanner/make_plan')
+        self.make_plan = rospy.ServiceProxy('/move_base/GlobalPlanner/make_plan', GetPlan)
         print ('')
 
         # actions
@@ -285,7 +288,7 @@ class Experiments():
         self.status = Status.NONE
 
     def find_new_path(self,start,goal):
-        path_plan = Path(Header(0,rospy.Time.now(),"/map"),[])
+        path_plan = Path(Header(0,rospy.Time(0),"/map"),[])
         while(len(path_plan.poses) is 0):
             path_plan.poses = self.make_plan(start, goal, 0.1).plan.poses
         return path_plan
@@ -322,10 +325,11 @@ class Experiments():
 
             # send commando to move_base
             mb_goal = MoveBaseGoal()
-            mb_goal.target_pose.header = Header(0,rospy.Time.now(),"map")
+            mb_goal.target_pose.header = Header(0,rospy.Time(0),"map")
             mb_goal.target_pose.pose = data.goal.pose
             self.move_base.send_goal(mb_goal, done_cb=self.movebase_callback)
             # self.move_base.wait_for_result()
+            self.rate.sleep()
 
             delta_space = []
             total_space = 0
