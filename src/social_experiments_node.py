@@ -112,12 +112,22 @@ class SocialExperimentsNode():
         # print real time factor
         file_factor = open(self.path_storage+"/real_time_factor.json","w+")
         i = 0
+        list_f = []
+        for e1 in self.data:
+            list_f.append('"'+str(i)+'":[' + ','.join([str(x) for x in e1.factor_array]) + ']')
+            i += 1
+        file_factor.write('{'+ ',\n'.join([str(x) for x in list_f]) +'}')
+        file_factor.close()
+
+        # print localization error
+        file_loc_err = open(self.path_storage+"/localization_error.json","w+")
+        i = 0
         list_e = []
         for e1 in self.data:
-            list_e.append('"'+str(i)+'":[' + ','.join([str(x) for x in e1.factor_array]) + ']')
+            list_e.append('"'+str(i)+'":[' + ','.join([str(x) for x in e1.localization_error_array]) + ']')
             i += 1
-        file_factor.write('{'+ ',\n'.join([str(x) for x in list_e]) +'}')
-        file_factor.close()
+        file_loc_err.write('{'+ ',\n'.join([str(x) for x in list_e]) +'}')
+        file_loc_err.close()
 
 
         # print path plan

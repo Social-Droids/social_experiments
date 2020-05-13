@@ -60,6 +60,7 @@ class Data():
         # pos experiment info
         self.status = None
         self.factor_array = []
+        self.localization_error_array = []
         self.path_executed = []
         self.delta_space = []
         self.delta_time = []
@@ -76,6 +77,7 @@ class Experiments():
         self.path_img_freecells_goal = path_img_freecells_goal
 
         # variables
+        self.tf_listener = tf.TransformListener()
         self.rate = rospy.Rate(10)
         self.freecells_start = []
         self.freecells_goal = []
@@ -346,6 +348,8 @@ class Experiments():
             factor_array = []
             factor_array.append(self.factor)
 
+            localization_error_array = []
+            localization_error_array.append(0)
 
             # loop
             step = 0
@@ -353,6 +357,11 @@ class Experiments():
                 self.rate.sleep()
 
                 factor_array.append(self.factor)
+
+		        # localization error
+            	(trans,rot) = self.tf_listener.lookupTransform('/map', '/odom', rospy.Time(0))
+                error = math.sqrt(pow(trans[0], 2) + pow(trans[1], 2))
+                localization_error_array.append(error)
 
                 # update space
                 s_now = self.robot_pose.position
@@ -401,6 +410,7 @@ class Experiments():
 
             #
             data.factor_array = factor_array
+            data.localization_error_array = localization_error_array
             data.path_executed = path_executed
             data.delta_space = delta_space
             data.delta_time = delta_time
