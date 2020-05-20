@@ -11,6 +11,8 @@ class SocialExperimentsNode():
     def __init__(self):
 
         # parameters
+        self.global_planner = rospy.get_param('social_experiments/global_planner', '')
+        self.local_planner = rospy.get_param('social_experiments/local_planner', '')
         self.world_model_name = rospy.get_param('social_experiments/world_model_name', '')
         self.robot_model_name = rospy.get_param('social_experiments/robot_model_name', '')
         self.max_experiments = rospy.get_param('social_experiments/max_experiments', 100)
@@ -22,6 +24,8 @@ class SocialExperimentsNode():
         self.path_img_freecells_goal = rospy.get_param('social_experiments/path_img_freecells_goal', '')
 
         # log
+        rospy.loginfo('global_planner: ' + self.global_planner)
+        rospy.loginfo('local_planner: ' + self.local_planner)
         rospy.loginfo('world_model_name: ' + self.world_model_name)
         rospy.loginfo('robot: ' + self.robot_model_name)
         rospy.loginfo('robot vel: ' + str(self.robot_vel))
@@ -35,7 +39,9 @@ class SocialExperimentsNode():
         self.data = []
 
         # init experiments
-        self.ex = Experiments(self.world_model_name, self.robot_model_name,
+        self.ex = Experiments(
+            self.global_planner, self.local_planner,
+            self.world_model_name, self.robot_model_name,
             self.path_img_freecells_start, self.path_img_freecells_goal)
 
     def start_experiments(self):

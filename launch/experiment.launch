@@ -46,6 +46,8 @@
   <!-- social_experiments -->
   <node name="social_experiments" pkg="social_experiments" type="social_experiments_node.py"
     output="screen" required="true">
+    <param name="global_planner"    value="$(arg global_planner)"/>
+    <param name="local_planner"     value="$(arg local_planner)"/>
     <param name="world_model_name"  value="$(arg map_name)"/>
     <param name="robot_model_name"  value="$(arg robot_name)"/>
     <param name="max_experiments"   value="$(arg max_experiments)"/>

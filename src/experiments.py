@@ -69,7 +69,11 @@ class Data():
 
 
 class Experiments():
-    def __init__(self, world_model_name, robot_model_name, path_img_freecells_start, path_img_freecells_goal):
+    def __init__(self, global_planner, local_planner, world_model_name,
+        robot_model_name, path_img_freecells_start, path_img_freecells_goal):
+
+        self.global_planner = global_planner
+        self.local_planner = local_planner
 
         self.world_model_name = world_model_name
         self.robot_model_name = robot_model_name
@@ -112,18 +116,18 @@ class Experiments():
         # rospy.Subscriber('/xtion/depth/points', PointCloud2, self.pc_callback)
 
         # services
-        rospy.loginfo('Waiting for "/gazebo/set_model_state" service')
-        rospy.wait_for_service('/gazebo/set_model_state')
-        self.model_reposition = rospy.ServiceProxy('/gazebo/set_model_state', SetModelState)
-        rospy.loginfo('Waiting for "/move_base/clear_costmaps" service')
-        rospy.wait_for_service('/move_base/clear_costmaps')
-        self.clear_costmaps = rospy.ServiceProxy('/move_base/clear_costmaps', Empty)
-        # rospy.loginfo('Waiting for "/move_base/NavfnROS/make_plan" service')
-        # rospy.wait_for_service('/move_base/NavfnROS/make_plan')
-        # self.make_plan = rospy.ServiceProxy('/move_base/NavfnROS/make_plan', GetPlan)
-        rospy.loginfo('Waiting for "/move_base/GlobalPlanner/make_plan" service')
-        rospy.wait_for_service('/move_base/GlobalPlanner/make_plan')
-        self.make_plan = rospy.ServiceProxy('/move_base/GlobalPlanner/make_plan', GetPlan)
+        s1 = '/gazebo/set_model_state'
+        rospy.loginfo('Waiting for "'+ s1 +'" service')
+        rospy.wait_for_service(s1)
+        self.model_reposition = rospy.ServiceProxy(s1, SetModelState)
+        s2 = '/move_base/clear_costmaps'
+        rospy.loginfo('Waiting for "'+ s2 +'" service')
+        rospy.wait_for_service(s2)
+        self.clear_costmaps = rospy.ServiceProxy(s2, Empty)
+        s3 = '/move_base/make_plan'
+        rospy.loginfo('Waiting for "'+ s3 +'" service')
+        rospy.wait_for_service(s3)
+        self.make_plan = rospy.ServiceProxy(s3, GetPlan)
         print ('')
 
         # actions
