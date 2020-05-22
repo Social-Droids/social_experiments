@@ -124,7 +124,7 @@ class Experiments():
         rospy.loginfo('Waiting for "'+ s2 +'" service')
         rospy.wait_for_service(s2)
         self.clear_costmaps = rospy.ServiceProxy(s2, Empty)
-        s3 = '/move_base/make_plan'
+        s3 = '/move_base/'+self.global_planner.split("/", 1)[1]+'/make_plan'
         rospy.loginfo('Waiting for "'+ s3 +'" service')
         rospy.wait_for_service(s3)
         self.make_plan = rospy.ServiceProxy(s3, GetPlan)
