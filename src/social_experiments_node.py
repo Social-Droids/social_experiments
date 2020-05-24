@@ -72,9 +72,9 @@ class SocialExperimentsNode():
             # self.bag.write('/path_plan', self.data[-1].path_plan)
             rospy.loginfo('Path plan size: ' + str(len(self.data[-1].path_plan.poses)))
 
+            self.ex.reset_world()
             rospy.loginfo('Resetting world model')
             self.ex.reset_model(self.world_model_name)
-
             rospy.loginfo('Resetting robot model')
             self.ex.reset_model(self.robot_model_name, self.data[-1].start.pose)
 

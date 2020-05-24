@@ -116,18 +116,22 @@ class Experiments():
         # rospy.Subscriber('/xtion/depth/points', PointCloud2, self.pc_callback)
 
         # services
+        s0 = '/gazebo/reset_world'
+        rospy.loginfo('Waiting for "'+ s0 +'" service')
+        rospy.wait_for_service(s0)
+        self.srv_reset_world = rospy.ServiceProxy(s0, Empty)
         s1 = '/gazebo/set_model_state'
         rospy.loginfo('Waiting for "'+ s1 +'" service')
         rospy.wait_for_service(s1)
-        self.model_reposition = rospy.ServiceProxy(s1, SetModelState)
+        self.srv_model_reposition = rospy.ServiceProxy(s1, SetModelState)
         s2 = '/move_base/clear_costmaps'
         rospy.loginfo('Waiting for "'+ s2 +'" service')
         rospy.wait_for_service(s2)
-        self.clear_costmaps = rospy.ServiceProxy(s2, Empty)
+        self.srv_clear_costmaps = rospy.ServiceProxy(s2, Empty)
         s3 = '/move_base/'+self.global_planner.split("/", 1)[1]+'/make_plan'
         rospy.loginfo('Waiting for "'+ s3 +'" service')
         rospy.wait_for_service(s3)
-        self.make_plan = rospy.ServiceProxy(s3, GetPlan)
+        self.srv_make_plan = rospy.ServiceProxy(s3, GetPlan)
         print ('')
 
         # actions
@@ -296,14 +300,18 @@ class Experiments():
     def find_new_path(self,start,goal):
         path_plan = Path(Header(0,rospy.Time(0),"/map"),[])
         while(len(path_plan.poses) is 0):
-            path_plan.poses = self.make_plan(start, goal, 0.1).plan.poses
+            path_plan.poses = self.srv_make_plan(start, goal, 0.1).plan.poses
         return path_plan
+
+    def reset_world(self):
+        self.srv_reset_world()
+        self.rate.sleep()
 
     def reset_model(self, model_name, pose = Pose()):
         model = ModelState()
         model.model_name = model_name
         model.pose = pose
-        self.model_reposition(model)
+        self.srv_model_reposition(model)
         self.rate.sleep()
 
     def get_clock(self):
@@ -326,7 +334,7 @@ class Experiments():
             rospy.loginfo('Experiment in progress...')
 
             # clear costmaps
-            self.clear_costmaps()
+            self.srv_clear_costmaps()
             self.rate.sleep()
 
             # send commando to move_base
