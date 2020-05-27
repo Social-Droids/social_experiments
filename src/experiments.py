@@ -333,6 +333,13 @@ class Experiments():
 
             rospy.loginfo('Experiment in progress...')
 
+            # Reset robot amcl position
+            initpose = PoseWithCovarianceStamped()
+            initpose.header = Header(0,rospy.Time.now(),"/map")
+            initpose.pose.pose = data.start.pose
+            self.pub_initpose.publish(initpose)
+            self.rate.sleep()
+
             # clear costmaps
             self.srv_clear_costmaps()
             self.rate.sleep()
