@@ -6,6 +6,7 @@ import math
 import time
 import rospy
 import numpy
+import rosnode
 # import rosbag
 import random
 import actionlib
@@ -97,6 +98,7 @@ class Experiments():
         self.robot_updated = False
         self.status = Status.NONE
         self.factor = 0
+        self.nodes = rosnode.get_node_names()
 
         # publishers
         self.pub_initpose = rospy.Publisher('/initialpose', PoseWithCovarianceStamped, queue_size=10)
@@ -333,12 +335,13 @@ class Experiments():
 
             rospy.loginfo('Experiment in progress...')
 
-            # Reset robot amcl position
-            initpose = PoseWithCovarianceStamped()
-            initpose.header = Header(0,rospy.Time.now(),"/map")
-            initpose.pose.pose = data.start.pose
-            self.pub_initpose.publish(initpose)
-            self.rate.sleep()
+            if '/amcl' in self.nodes:
+                # Reset robot amcl position
+                initpose = PoseWithCovarianceStamped()
+                initpose.header = Header(0,rospy.Time.now(),"/map")
+                initpose.pose.pose = data.start.pose
+                self.pub_initpose.publish(initpose)
+                self.rate.sleep()
 
             # clear costmaps
             self.srv_clear_costmaps()
