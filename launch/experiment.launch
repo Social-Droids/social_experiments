@@ -8,6 +8,8 @@
   <arg name="use_fake_localization" default="false"/>
   <arg name="global_planner"        default="navfn/NavfnROS"/>
   <arg name="local_planner"         default="base_local_planner/TrajectoryPlannerROS"/>
+  <arg name="global_layers"         default="[ {name: static_layer, type: 'costmap_2d::StaticLayer'}, {name: obstacles_layer, type: 'costmap_2d::VoxelLayer'}, {name: inflation_layer, type: 'costmap_2d::InflationLayer'}]" />
+  <arg name="local_layers"          default="[ {name: obstacles_layer, type: 'costmap_2d::VoxelLayer'}, {name: inflation_layer, type: 'costmap_2d::InflationLayer'}]"/>
   <arg name="observation_sources"   default="laser_scan_back_observation"/>
   <arg name="xy_goal_tolerance"     default="0.1"/>
   <arg name="yaw_goal_tolerance"    default="0.05"/>
@@ -34,6 +36,8 @@
     <arg name="use_fake_localization" default="$(arg use_fake_localization)"/>
     <arg name="global_planner"        default="$(arg global_planner)"/>
     <arg name="local_planner"         default="$(arg local_planner)"/>
+    <arg name="global_layers"         default="$(arg global_layers)"/>
+    <arg name="local_layers"          default="$(arg local_layers)"/>
     <arg name="observation_sources"   default="$(arg observation_sources)"/>
     <arg name="xy_goal_tolerance"     default="$(arg xy_goal_tolerance)"/>
     <arg name="yaw_goal_tolerance"    default="$(arg yaw_goal_tolerance)"/>
