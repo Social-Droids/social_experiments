@@ -1,21 +1,25 @@
 <?xml version="1.0"?>
 <launch>
 
-  <arg name="map_name"              default="simple_room"/>
+  <arg name="robot_name"             default="robot"/>
 
-  <arg name="robot_name"            default="robot"/>
+  <arg name="path_storage"           default=""/>
+  <arg name="max_experiments"        default="10"/>
 
-  <arg name="use_fake_localization" default="false"/>
-  <arg name="global_planner"        default="navfn/NavfnROS"/>
-  <arg name="local_planner"         default="base_local_planner/TrajectoryPlannerROS"/>
-  <arg name="global_layers"         default="[ {name: static_layer, type: 'costmap_2d::StaticLayer'}, {name: obstacles_layer, type: 'costmap_2d::VoxelLayer'}, {name: inflation_layer, type: 'costmap_2d::InflationLayer'}]" />
-  <arg name="local_layers"          default="[ {name: obstacles_layer, type: 'costmap_2d::VoxelLayer'}, {name: inflation_layer, type: 'costmap_2d::InflationLayer'}]"/>
-  <arg name="observation_sources"   default="laser_scan_back_observation"/>
-  <arg name="xy_goal_tolerance"     default="0.1"/>
-  <arg name="yaw_goal_tolerance"    default="0.05"/>
+  <arg name="map_name"               default="simple_room"/>
+  <arg name="use_fake_localization"  default="false"/>
+  <arg name="global_planner"         default="navfn/NavfnROS"/>
+  <arg name="local_planner"          default="base_local_planner/TrajectoryPlannerROS"/>
+  <arg name="global_layers"          default="[ {name: static_layer, type: 'costmap_2d::StaticLayer'}, {name: obstacles_layer, type: 'costmap_2d::VoxelLayer'}, {name: inflation_layer, type: 'costmap_2d::InflationLayer'}]" />
+  <arg name="local_layers"           default="[ {name: obstacles_layer, type: 'costmap_2d::VoxelLayer'}, {name: inflation_layer, type: 'costmap_2d::InflationLayer'}]"/>
+  <arg name="observation_sources"    default="laser_scan_back_observation"/>
 
-  <param name="max_experiments"     value="10"/>
-  <param name="path_storage"        value=""/>
+  <arg name="xy_goal_tolerance"      default="0.1"/>
+  <arg name="yaw_goal_tolerance"     default="3.1415"/>
+  <arg name="robot_vel"              default="0.3"/>
+  <arg name="space_factor_tolerance" default="5"/>
+  <arg name="time_factor_tolerance"  default="5"/>
+
 
 <!-- ###################################################################### -->
 <!-- ###################################################################### -->
@@ -50,17 +54,17 @@
   <!-- social_experiments -->
   <node name="social_experiments" pkg="social_experiments" type="social_experiments_node.py"
     output="screen" required="true">
-    <param name="global_planner"    value="$(arg global_planner)"/>
-    <param name="local_planner"     value="$(arg local_planner)"/>
-    <param name="world_model_name"  value="$(arg map_name)"/>
-    <param name="robot_model_name"  value="$(arg robot_name)"/>
-    <param name="max_experiments"   value="$(arg max_experiments)"/>
-    <param name="path_storage"      value="$(arg path_storage)"/>
-    <param name="robot_vel"                value="0.3"/>
-    <param name="space_factor_tolerance"   value="5"/>
-    <param name="time_factor_tolerance"    value="5"/>
-    <param name="path_img_freecells_start" value="$(find social_experiments)/config/map/$(arg map_name)/freecells_start.png"/>
-    <param name="path_img_freecells_goal"  value="$(find social_experiments)/config/map/$(arg map_name)/freecells_goal.png"/>
+    <param name="global_planner"            value="$(arg global_planner)"/>
+    <param name="local_planner"             value="$(arg local_planner)"/>
+    <param name="world_model_name"          value="$(arg map_name)"/>
+    <param name="robot_model_name"          value="$(arg robot_name)"/>
+    <param name="max_experiments"           value="$(arg max_experiments)"/>
+    <param name="path_storage"              value="$(arg path_storage)"/>
+    <param name="robot_vel"                 value="$(arg robot_vel)"/>
+    <param name="space_factor_tolerance"    value="$(arg space_factor_tolerance)"/>
+    <param name="time_factor_tolerance"     value="$(arg time_factor_tolerance)"/>
+    <param name="path_img_freecells_start"  value="$(find social_experiments)/config/map/$(arg map_name)/freecells_start.png"/>
+    <param name="path_img_freecells_goal"   value="$(find social_experiments)/config/map/$(arg map_name)/freecells_goal.png"/>
   </node>
 
   <!-- check robot collisions -->
