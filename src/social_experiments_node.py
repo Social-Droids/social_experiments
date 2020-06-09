@@ -176,6 +176,22 @@ class SocialExperimentsNode():
         file_path_elapsed_x.close()
         file_path_elapsed_y.close()
 
+        # print people
+        file_people = open(self.path_storage+"/people.json","w+")
+        i = 0
+        list_1 = []
+        for e1 in self.data:
+            list_2 = []
+            for e2 in e1.people_array:
+                list_3 = []
+                for e3 in e2:
+                    list_3.append('['+str(e3.position.x)+','+str(e3.position.y)+']')
+                list_2.append('[' + ','.join([str(x) for x in list_3]) + ']')
+            list_1.append('"'+str(i)+'":[' + ','.join([str(x) for x in list_2]) + ']')
+            i += 1
+        file_people.write('{'+ ',\n'.join([str(x) for x in list_1]) +'}')
+        file_people.close()
+
         # print result
         file_result = open(self.path_storage+"/result.csv","w+")
         file_result.write("i,start_x,start_y,start_ang,goal_x,goal_y,goal_ang," +

@@ -30,6 +30,7 @@ from geometry_msgs.msg import Pose
 from gazebo_msgs.msg import ModelStates
 from gazebo_msgs.msg import ModelState
 from gazebo_msgs.srv import SetModelState
+from people_msgs.msg import People
 from nav_msgs.msg import OccupancyGrid
 from nav_msgs.msg import Path
 from nav_msgs.srv import GetPlan
@@ -61,6 +62,7 @@ class Data():
         # pos experiment info
         self.status = None
         self.factor_array = []
+        self.people_array = []
         self.localization_error_array = []
         self.path_executed = []
         self.delta_space = []
@@ -98,6 +100,7 @@ class Experiments():
         self.robot_updated = False
         self.status = Status.NONE
         self.factor = 0
+        self.people = []
         self.nodes = rosnode.get_node_names()
 
         # publishers
@@ -111,6 +114,7 @@ class Experiments():
         rospy.Subscriber('/clock', Clock, self.clock_callback)
         rospy.Subscriber('/collision', String, self.collision_callback)
         rospy.Subscriber('/real_time_factor', Float32, self.factor_callback)
+        rospy.Subscriber('/people', People, self.people_callback)
         # rospy.Subscriber('/map', OccupancyGrid, self.map1_callback)
         # rospy.Subscriber('/move_base/global_costmap/costmap', OccupancyGrid, self.map2_callback)
         # rospy.Subscriber('/base_scan_front', LaserScan, self.bsf_callback)
@@ -189,6 +193,9 @@ class Experiments():
     def factor_callback(self, msg):
         # rospy.loginfo('Real time factor: ' + str(msg.data))
         self.factor = msg.data
+
+    def people_callback(self, msg):
+        self.people = msg.people
 
     # def bsf_callback(self, data):
     #     self.bsf = data
@@ -302,6 +309,9 @@ class Experiments():
     def find_new_path(self,start,goal):
         path_plan = Path(Header(0,rospy.Time(0),"/map"),[])
         while(len(path_plan.poses) is 0):
+            if '/amcl' in self.nodes:
+                self.reset_amcl(start.pose)
+            self.srv_clear_costmaps()
             path_plan.poses = self.srv_make_plan(start, goal, 0.1).plan.poses
         return path_plan
 
@@ -314,6 +324,14 @@ class Experiments():
         model.model_name = model_name
         model.pose = pose
         self.srv_model_reposition(model)
+        self.rate.sleep()
+
+    def reset_amcl(self, start_pose):
+        # Reset robot amcl position
+        initpose = PoseWithCovarianceStamped()
+        initpose.header = Header(0,rospy.Time.now(),"/map")
+        initpose.pose.pose = start_pose
+        self.pub_initpose.publish(initpose)
         self.rate.sleep()
 
     def get_clock(self):
@@ -336,12 +354,7 @@ class Experiments():
             rospy.loginfo('Experiment in progress...')
 
             if '/amcl' in self.nodes:
-                # Reset robot amcl position
-                initpose = PoseWithCovarianceStamped()
-                initpose.header = Header(0,rospy.Time.now(),"/map")
-                initpose.pose.pose = data.start.pose
-                self.pub_initpose.publish(initpose)
-                self.rate.sleep()
+                self.reset_amcl(data.start.pose)
 
             # clear costmaps
             self.srv_clear_costmaps()
@@ -370,6 +383,9 @@ class Experiments():
             factor_array = []
             factor_array.append(self.factor)
 
+            people_array = []
+            people_array.append(self.people)
+
             localization_error_array = []
             localization_error_array.append(0)
 
@@ -379,6 +395,7 @@ class Experiments():
                 self.rate.sleep()
 
                 factor_array.append(self.factor)
+                people_array.append(self.people)
 
 		        # localization error
             	(trans,rot) = self.tf_listener.lookupTransform('/map', '/odom', rospy.Time(0))
@@ -432,6 +449,7 @@ class Experiments():
 
             #
             data.factor_array = factor_array
+            data.people_array = people_array
             data.localization_error_array = localization_error_array
             data.path_executed = path_executed
             data.delta_space = delta_space
