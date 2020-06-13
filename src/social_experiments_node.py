@@ -20,8 +20,8 @@ class SocialExperimentsNode():
         self.robot_vel = rospy.get_param('social_experiments/robot_vel', 0.3)
         self.space_factor_tolerance = rospy.get_param('social_experiments/space_factor_tolerance', 5)
         self.time_factor_tolerance = rospy.get_param('social_experiments/time_factor_tolerance', 5)
-        self.path_img_freecells_start = rospy.get_param('social_experiments/path_img_freecells_start', '')
-        self.path_img_freecells_goal = rospy.get_param('social_experiments/path_img_freecells_goal', '')
+        # self.path_img_freecells_start = rospy.get_param('social_experiments/path_img_freecells_start', '')
+        # self.path_img_freecells_goal = rospy.get_param('social_experiments/path_img_freecells_goal', '')
 
         # log
         rospy.loginfo('global_planner: ' + self.global_planner)
@@ -41,8 +41,9 @@ class SocialExperimentsNode():
         # init experiments
         self.ex = Experiments(
             self.global_planner, self.local_planner,
-            self.world_model_name, self.robot_model_name,
-            self.path_img_freecells_start, self.path_img_freecells_goal)
+            self.world_model_name, self.robot_model_name
+            # ,self.path_img_freecells_start, self.path_img_freecells_goal
+            )
 
     def start_experiments(self):
         # experiments loop

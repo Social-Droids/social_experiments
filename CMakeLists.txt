@@ -10,6 +10,7 @@ add_compile_options(-std=c++11)
 find_package(catkin REQUIRED COMPONENTS
   rospy
   std_msgs
+  social_worlds
 )
 
 ## System dependencies are found with CMake's conventions

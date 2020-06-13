@@ -10,7 +10,7 @@ import rosnode
 # import rosbag
 import random
 import actionlib
-from PIL import Image
+# from PIL import Image
 from enum import Enum
 
 from visualization_msgs.msg import MarkerArray
@@ -40,6 +40,8 @@ from std_msgs.msg import Float32
 from std_srvs.srv import Empty
 from tf2_msgs.msg import TFMessage
 from rosgraph_msgs.msg import Clock
+from social_worlds.srv import Regions
+
 
 class Status(Enum):
     NONE = 0
@@ -73,15 +75,17 @@ class Data():
 
 class Experiments():
     def __init__(self, global_planner, local_planner, world_model_name,
-        robot_model_name, path_img_freecells_start, path_img_freecells_goal):
+        robot_model_name
+        # , path_img_freecells_start, path_img_freecells_goal
+        ):
 
         self.global_planner = global_planner
         self.local_planner = local_planner
 
         self.world_model_name = world_model_name
         self.robot_model_name = robot_model_name
-        self.path_img_freecells_start = path_img_freecells_start
-        self.path_img_freecells_goal = path_img_freecells_goal
+        # self.path_img_freecells_start = path_img_freecells_start
+        # self.path_img_freecells_goal = path_img_freecells_goal
 
         # variables
         self.tf_listener = tf.TransformListener()
@@ -138,6 +142,15 @@ class Experiments():
         rospy.loginfo('Waiting for "'+ s3 +'" service')
         rospy.wait_for_service(s3)
         self.srv_make_plan = rospy.ServiceProxy(s3, GetPlan)
+        s4 = '/regions/start'
+        rospy.loginfo('Waiting for "'+ s4 +'" service')
+        rospy.wait_for_service(s4)
+        self.srv_regions_start = rospy.ServiceProxy(s4, Regions)
+        print ('')
+        s5 = '/regions/goal'
+        rospy.loginfo('Waiting for "'+ s5 +'" service')
+        rospy.wait_for_service(s5)
+        self.srv_regions_goal = rospy.ServiceProxy(s5, Regions)
         print ('')
 
         # actions
@@ -145,18 +158,25 @@ class Experiments():
         self.move_base.wait_for_server()
 
         # get freecells
-        img_freecells_start = cv2.imread(self.path_img_freecells_start,0)
-        img_freecells_goal = cv2.imread(self.path_img_freecells_goal,0)
-        (h_s, w_s) = img_freecells_start.shape[:2]
-        (h_g, w_g) = img_freecells_goal.shape[:2]
-        MS = cv2.getRotationMatrix2D((w_s/2, h_s/2), -90, 1.0)
-        MG = cv2.getRotationMatrix2D((w_g/2, h_g/2), -90, 1.0)
-        img_freecells_start = cv2.warpAffine(img_freecells_start, MS, (h_s,w_s))
-        img_freecells_goal = cv2.warpAffine(img_freecells_goal, MG, (h_g,w_g))
-        a_s = numpy.argwhere(img_freecells_start == 255)
-        a_g = numpy.argwhere(img_freecells_goal == 255)
-        self.freecells_start = a_s*0.05 - 100
-        self.freecells_goal = a_g*0.05 - 100
+        # img_freecells_start = cv2.imread(self.path_img_freecells_start,0)
+        # img_freecells_goal = cv2.imread(self.path_img_freecells_goal,0)
+        # (h_s, w_s) = img_freecells_start.shape[:2]
+        # (h_g, w_g) = img_freecells_goal.shape[:2]
+        # MS = cv2.getRotationMatrix2D((w_s/2, h_s/2), -90, 1.0)
+        # MG = cv2.getRotationMatrix2D((w_g/2, h_g/2), -90, 1.0)
+        # img_freecells_start = cv2.warpAffine(img_freecells_start, MS, (h_s,w_s))
+        # img_freecells_goal = cv2.warpAffine(img_freecells_goal, MG, (h_g,w_g))
+        # a_s = numpy.argwhere(img_freecells_start == 255)
+        # a_g = numpy.argwhere(img_freecells_goal == 255)
+        # self.freecells_start = a_s*0.05 - 100
+        # self.freecells_goal = a_g*0.05 - 100
+        # start_marker_array = self.get_freecells_markers(self.freecells_start)
+        # goal_marker_array = self.get_freecells_markers(self.freecells_goal)
+        # self.pub_freecells_start.publish(start_marker_array)
+        # self.pub_freecells_goal.publish(goal_marker_array)
+
+        self.freecells_start = self.srv_regions_start().points
+        self.freecells_goal = self.srv_regions_goal().points
         start_marker_array = self.get_freecells_markers(self.freecells_start)
         goal_marker_array = self.get_freecells_markers(self.freecells_goal)
         self.pub_freecells_start.publish(start_marker_array)
@@ -224,10 +244,10 @@ class Experiments():
         # get robot random start pose
         start = Pose()
         start_angle = random.randint(0,360)
-        start_index = random.randint(0,len(self.freecells_start))
+        start_index = random.randint(0,len(self.freecells_start)-1)
         start_quaternion = tf.transformations.quaternion_from_euler(0, 0, math.radians(start_angle))
-        start.position.x = self.freecells_start[start_index][0]
-        start.position.y = self.freecells_start[start_index][1]
+        start.position.x = self.freecells_start[start_index].x
+        start.position.y = self.freecells_start[start_index].y
         start.position.z = 0.1
         start.orientation.x = start_quaternion[0]
         start.orientation.y = start_quaternion[1]
@@ -238,10 +258,10 @@ class Experiments():
         # get robot random goal pose
         goal = Pose()
         goal_angle = random.randint(0,360)
-        goal_index = random.randint(0,len(self.freecells_goal))
+        goal_index = random.randint(0,len(self.freecells_goal)-1)
         goal_quaternion = tf.transformations.quaternion_from_euler(0, 0, math.radians(goal_angle))
-        goal.position.x = self.freecells_goal[goal_index][0]
-        goal.position.y = self.freecells_goal[goal_index][1]
+        goal.position.x = self.freecells_goal[goal_index].x
+        goal.position.y = self.freecells_goal[goal_index].y
         goal.position.z = 0.1
         goal.orientation.x = goal_quaternion[0]
         goal.orientation.y = goal_quaternion[1]
@@ -291,9 +311,9 @@ class Experiments():
             marker.color.g = 1.0
             marker.color.b = 0.0
             marker.pose.orientation.w = 1.0
-            marker.pose.position.x = fc[0]
-            marker.pose.position.y = fc[1]
-            marker.pose.position.z = 0.0
+            marker.pose.position.x = fc.x
+            marker.pose.position.y = fc.y
+            marker.pose.position.z = fc.z
 
             markerArray.markers.append(marker)
             id += 1
