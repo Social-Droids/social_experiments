@@ -50,6 +50,7 @@ class Status(Enum):
     TIME_EXCEEDED = 3
     ABORTION = 4
     COLLISION = 5
+    INVASION = 6
 
 class Data():
     def __init__(self):
@@ -117,6 +118,7 @@ class Experiments():
         rospy.Subscriber('/tf', TFMessage, self.tf_callback)
         rospy.Subscriber('/clock', Clock, self.clock_callback)
         rospy.Subscriber('/collision', String, self.collision_callback)
+        rospy.Subscriber('/check_region_forbidden', Point, self.forbidden_callback)
         rospy.Subscriber('/real_time_factor', Float32, self.factor_callback)
         rospy.Subscriber('/people', People, self.people_callback)
         # rospy.Subscriber('/map', OccupancyGrid, self.map1_callback)
@@ -208,6 +210,11 @@ class Experiments():
     def collision_callback(self, msg):
         # rospy.loginfo('Collision detected with ' + msg.data)
         self.status = Status.COLLISION
+        self.experiment_finished = True
+
+    def forbidden_callback(self, msg):
+        # rospy.loginfo('forbidden region invaded: point(' + msg.x + "," + msg.y + ")" )
+        self.status = Status.INVASION
         self.experiment_finished = True
 
     def factor_callback(self, msg):

@@ -7,7 +7,7 @@
   <arg name="max_experiments"        default="10"/>
 
   <arg name="map_name"               default="simple_room"/>
-  <arg name="use_fake_localization"  default="false"/>
+  <arg name="use_amcl"               default="true"/>
   <arg name="global_planner"         default="navfn/NavfnROS"/>
   <arg name="local_planner"          default="base_local_planner/TrajectoryPlannerROS"/>
   <arg name="global_layers"          default="[ {name: static_layer, type: 'costmap_2d::StaticLayer'}, {name: obstacles_layer, type: 'costmap_2d::VoxelLayer'}, {name: inflation_layer, type: 'costmap_2d::InflationLayer'}]" />
@@ -37,7 +37,7 @@
   <!-- navigation -->
   <include file="$(find hera_bringup)/launch/bring_up.launch" >
     <arg name="map_name"              default="$(arg map_name)"/>
-    <arg name="use_fake_localization" default="$(arg use_fake_localization)"/>
+    <arg name="use_amcl"              default="$(arg use_amcl)"/>
     <arg name="global_planner"        default="$(arg global_planner)"/>
     <arg name="local_planner"         default="$(arg local_planner)"/>
     <arg name="global_layers"         default="$(arg global_layers)"/>
@@ -63,14 +63,19 @@
     <param name="robot_vel"                 value="$(arg robot_vel)"/>
     <param name="space_factor_tolerance"    value="$(arg space_factor_tolerance)"/>
     <param name="time_factor_tolerance"     value="$(arg time_factor_tolerance)"/>
-    <!-- <param name="path_img_freecells_start"  value="$(find social_experiments)/config/map/$(arg map_name)/freecells_start.png"/> -->
-    <!-- <param name="path_img_freecells_goal"   value="$(find social_experiments)/config/map/$(arg map_name)/freecells_goal.png"/> -->
   </node>
 
   <!-- check robot collisions -->
   <node name="hera_check_collision" pkg="hera_description" type="hera_check_collision" output="screen">
     <param name="world_name" value="default"/>
     <param name="robot_name" value="$(arg robot_name)"/>
+  </node>
+
+  <!-- check_region -->
+  <node name="check_region_forbidden" pkg="social_worlds" type="check_region_node" output="screen">
+    <param name="robot_name" value="$(arg robot_name)"/>
+    <param name="region_name" value="forbidden"/>
+    <!-- <param name="region_name" value="start"/> -->
   </node>
 
   <!-- real time factor publisher -->
