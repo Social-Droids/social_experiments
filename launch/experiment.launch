@@ -6,6 +6,7 @@
   <arg name="path_storage"           default=""/>
   <arg name="max_experiments"        default="10"/>
 
+  <arg name="world_name"             default="simple_room"/>
   <arg name="map_name"               default="simple_room"/>
   <arg name="use_amcl"               default="true"/>
   <arg name="global_planner"         default="navfn/NavfnROS"/>
@@ -27,7 +28,7 @@
 
   <!-- simulator -->
   <include file="$(find social_worlds)/launch/gazebo.launch" >
-    <arg name="model" default="$(arg map_name)" />
+    <arg name="model" default="$(arg world_name)" />
     <arg name="enable_gui" default="false" />
   </include>
 
@@ -56,13 +57,16 @@
     output="screen" required="true">
     <param name="global_planner"            value="$(arg global_planner)"/>
     <param name="local_planner"             value="$(arg local_planner)"/>
-    <param name="world_model_name"          value="$(arg map_name)"/>
+    <param name="world_model_name"          value="$(arg world_name)"/>
     <param name="robot_model_name"          value="$(arg robot_name)"/>
     <param name="max_experiments"           value="$(arg max_experiments)"/>
     <param name="path_storage"              value="$(arg path_storage)"/>
     <param name="robot_vel"                 value="$(arg robot_vel)"/>
     <param name="space_factor_tolerance"    value="$(arg space_factor_tolerance)"/>
     <param name="time_factor_tolerance"     value="$(arg time_factor_tolerance)"/>
+    <param name="start_service"             value="/regions/start"/>
+    <param name="goal_service"              value="/regions/goal"/>
+    <param name="checkpoint_services"       value=""/>
   </node>
 
   <!-- check robot collisions -->
@@ -72,9 +76,9 @@
   </node>
 
   <!-- check_region -->
-  <node name="check_region_forbidden" pkg="social_worlds" type="check_region_node" output="screen">
+  <node name="check_forbidden_region" pkg="social_worlds" type="check_region_node" output="screen">
     <param name="robot_name" value="$(arg robot_name)"/>
-    <param name="region_name" value="forbidden"/>
+    <param name="region_name" value="forbidden_region"/>
     <!-- <param name="region_name" value="start"/> -->
   </node>
 

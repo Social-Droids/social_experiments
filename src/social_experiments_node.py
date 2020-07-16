@@ -20,8 +20,14 @@ class SocialExperimentsNode():
         self.robot_vel = rospy.get_param('social_experiments/robot_vel', 0.3)
         self.space_factor_tolerance = rospy.get_param('social_experiments/space_factor_tolerance', 5)
         self.time_factor_tolerance = rospy.get_param('social_experiments/time_factor_tolerance', 5)
-        # self.path_img_freecells_start = rospy.get_param('social_experiments/path_img_freecells_start', '')
-        # self.path_img_freecells_goal = rospy.get_param('social_experiments/path_img_freecells_goal', '')
+        # self.start_service = rospy.get_param('social_experiments/start_service', '/regions/start')
+        # self.goal_service = rospy.get_param('social_experiments/goal_service', '/regions/goal')
+        self.checkpoint_services = rospy.get_param('social_experiments/checkpoint_services', '')
+
+        if(self.checkpoint_services is ''):
+            self.checkpoint_services = []
+        else:
+            self.checkpoint_services = list(self.checkpoint_services.split(" "))
 
         # log
         rospy.loginfo('global_planner: ' + self.global_planner)
@@ -32,17 +38,18 @@ class SocialExperimentsNode():
         rospy.loginfo('space factor tolerance: ' + str(self.space_factor_tolerance))
         rospy.loginfo('time factor tolerance: ' + str(self.time_factor_tolerance))
         rospy.loginfo('max experiments: ' + str(self.max_experiments))
+        # rospy.loginfo('start service: ' + str(self.start_service))
+        # rospy.loginfo('goal service: ' + str(self.goal_service))
+        # rospy.loginfo('checkpoint services: ' + str(self.checkpoint_services))
         print ('')
 
-        # # bag
-        # self.bag = None
+        # data
         self.data = []
 
         # init experiments
         self.ex = Experiments(
             self.global_planner, self.local_planner,
             self.world_model_name, self.robot_model_name
-            # ,self.path_img_freecells_start, self.path_img_freecells_goal
             )
 
     def start_experiments(self):
@@ -51,36 +58,33 @@ class SocialExperimentsNode():
             rospy.loginfo('Preparing experiment %i/%i' % (i+1, self.max_experiments))
             self.data.append(Data())
 
-            # # open bag
-            # self.bag = rosbag.Bag(self.path_bags_storage + "/" + str(i)+'.bag', 'w')
-            # self.bag.write('/clock', self.ex.get_clock())
-
-            rospy.loginfo('Fiding new start and goal poses...')
-            (self.data[-1].start, self.data[-1].goal) = self.ex.get_start_and_goal_random()
-            # self.bag.write('/start', self.data[-1].start)
-            # self.bag.write('/goal', self.data[-1].goal)
-            rospy.loginfo('Start'
-            + '(x=' + str(self.data[-1].start.pose.position.x)
-            + ',y=' + str(self.data[-1].start.pose.position.x)
-            + ',ang=' + str(self.data[-1].start.pose.orientation.z) + ')')
-            rospy.loginfo('Goal'
-            + '(x=' + str(self.data[-1].goal.pose.position.x)
-            + ',y=' + str(self.data[-1].goal.pose.position.y)
-            + ',ang=' + str(self.data[-1].goal.pose.orientation.z) + ')')
+            rospy.loginfo('Fiding checkpoints...')
+            self.data[-1].checkpoints = self.ex.get_checkpoints_random("/regions/path")
+            self.data[-1].path_executed.append(self.data[-1].checkpoints[0].pose.position)
+            for n, cp in enumerate(self.data[-1].checkpoints):
+                rospy.loginfo('checkpoint ' + str(n) + ': '
+                + '(x=' + str(cp.pose.position.x)
+                + ',y=' + str(cp.pose.position.x)
+                + ',ang=' + str(cp.pose.orientation.z) + ')')
 
             rospy.loginfo('Finding a path plan...')
-            self.data[-1].path_plan = self.ex.find_new_path(self.data[-1].start,self.data[-1].goal)
-            # self.bag.write('/path_plan', self.data[-1].path_plan)
-            rospy.loginfo('Path plan size: ' + str(len(self.data[-1].path_plan.poses)))
+            for n in range(1,len(self.data[-1].checkpoints)):
+                plan = self.ex.find_new_path(
+                    self.data[-1].checkpoints[n-1],
+                    self.data[-1].checkpoints[n]).poses
+                rospy.loginfo('Path plan from checkpoint ' + str(n-1) +' to '+ str(n) +': ' +
+                    str(len(plan)))
+                self.data[-1].path_plan += plan
+            rospy.loginfo('Total path plan size: ' + str(len(self.data[-1].path_plan)))
 
             self.ex.reset_world()
             rospy.loginfo('Resetting world model')
             self.ex.reset_model(self.world_model_name)
             rospy.loginfo('Resetting robot model')
-            self.ex.reset_model(self.robot_model_name, self.data[-1].start.pose)
+            self.ex.reset_model(self.robot_model_name, self.data[-1].checkpoints[0].pose)
 
             rospy.loginfo("setting min dist and time to reach destination")
-            (self.data[-1].space_min, self.data[-1].time_min) = self.ex.get_min_dist_time(self.data[-1].path_plan.poses, self.robot_vel)
+            (self.data[-1].space_min, self.data[-1].time_min) = self.ex.get_min_dist_time(self.data[-1].path_plan, self.robot_vel)
             rospy.loginfo('Space min: ' + str(self.data[-1].space_min) + ' meters')
             rospy.loginfo('Time min: ' + str(self.data[-1].time_min) + ' seconds')
 
@@ -90,10 +94,18 @@ class SocialExperimentsNode():
             rospy.loginfo('Space max: ' + str(self.data[-1].space_max) + ' meters')
             rospy.loginfo('Time max: ' + str(self.data[-1].time_max) + ' seconds')
 
-
+            self.ex.robot_update()
             rospy.loginfo('Start experiment %i/%i' % (i+1, self.max_experiments))
-            self.ex.start(self.data[-1])
+            self.ex.send_move_base_command(self.data[-1].checkpoints[1])
+            rospy.loginfo('Experiment in progress...')
 
+            self.data[-1].delta_space.append(0)
+            self.data[-1].delta_time.append(rospy.Time.now())
+            self.data[-1].total_space = 0
+            self.data[-1].total_time = 0
+
+            self.ex.start(self.data[-1])
+            self.ex.cancel_all_goals()
 
             rospy.loginfo('Space elapsed: ' + str(self.data[-1].total_space) + ' meters')
             rospy.loginfo('Time elapsed: ' + str(self.data[-1].total_time) + ' seconds')
@@ -101,8 +113,6 @@ class SocialExperimentsNode():
             rospy.loginfo('Finish experiment ' + str(i+1) + '/' + str(self.max_experiments))
             print ('')
 
-            # # close bag
-            # self.bag.close()
 
     def generate_csv(self):
         # print params
@@ -146,7 +156,7 @@ class SocialExperimentsNode():
         for e1 in self.data:
             list_x = []
             list_y = []
-            for e2 in e1.path_plan.poses:
+            for e2 in e1.path_plan:
                 list_x.append(e2.pose.position.x)
                 list_y.append(e2.pose.position.y)
             list_ex.append('"'+str(i)+'":[' + ','.join([str(x) for x in list_x]) + ']')
@@ -200,17 +210,17 @@ class SocialExperimentsNode():
         i = 0
         for e1 in self.data:
             (_, _, start_yaw) = tf.transformations.euler_from_quaternion(
-                [e1.start.pose.orientation.x, e1.start.pose.orientation.y,
-                e1.start.pose.orientation.z, e1.start.pose.orientation.w])
+                [e1.checkpoints[0].pose.orientation.x, e1.checkpoints[0].pose.orientation.y,
+                e1.checkpoints[0].pose.orientation.z, e1.checkpoints[0].pose.orientation.w])
             (_, _, goal_yaw) = tf.transformations.euler_from_quaternion(
-                [e1.goal.pose.orientation.x, e1.goal.pose.orientation.y,
-                e1.goal.pose.orientation.z, e1.goal.pose.orientation.w])
+                [e1.checkpoints[-1].pose.orientation.x, e1.checkpoints[-1].pose.orientation.y,
+                e1.checkpoints[-1].pose.orientation.z, e1.checkpoints[-1].pose.orientation.w])
             file_result.write( str(i) + ",")
-            file_result.write( str(e1.start.pose.position.x) + ",")
-            file_result.write( str(e1.start.pose.position.y) + ",")
+            file_result.write( str(e1.checkpoints[0].pose.position.x) + ",")
+            file_result.write( str(e1.checkpoints[0].pose.position.y) + ",")
             file_result.write( str(start_yaw) + ",")
-            file_result.write( str(e1.goal.pose.position.x) + ",")
-            file_result.write( str(e1.goal.pose.position.y) + ",")
+            file_result.write( str(e1.checkpoints[-1].pose.position.x) + ",")
+            file_result.write( str(e1.checkpoints[-1].pose.position.y) + ",")
             file_result.write( str(goal_yaw) + ",")
             file_result.write( str(e1.space_min) + ",")
             file_result.write( str(e1.time_min) + ",")
