@@ -390,7 +390,7 @@ class Experiments():
     def get_clock(self):
         return self.clock
 
-    def robot_update(self):
+    def robot_update(self, start):
 
         rospy.loginfo('Waiting for robot update...')
 
@@ -404,7 +404,7 @@ class Experiments():
             self.rate.sleep()
 
         if '/amcl' in self.nodes:
-            self.reset_amcl(data.start.pose)
+            self.reset_amcl(start.pose)
 
         # clear costmaps
         self.srv_clear_costmaps()

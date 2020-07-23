@@ -94,7 +94,7 @@ class SocialExperimentsNode():
             rospy.loginfo('Space max: ' + str(self.data[-1].space_max) + ' meters')
             rospy.loginfo('Time max: ' + str(self.data[-1].time_max) + ' seconds')
 
-            self.ex.robot_update()
+            self.ex.robot_update(self.data[-1].checkpoints[0])
             rospy.loginfo('Start experiment %i/%i' % (i+1, self.max_experiments))
             self.ex.send_move_base_command(self.data[-1].checkpoints[1])
             rospy.loginfo('Experiment in progress...')
