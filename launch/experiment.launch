@@ -27,8 +27,8 @@
 <!-- ###################################################################### -->
 
   <!-- simulator -->
-  <include file="$(find social_worlds)/launch/gazebo.launch" >
-    <arg name="model" default="$(arg world_name)" />
+  <include file="$(find social_worlds)/launch/start_world.launch" >
+    <arg name="world_name" default="$(arg world_name)" />
     <arg name="enable_gui" default="false" />
   </include>
 
@@ -77,8 +77,8 @@
 
   <!-- check_region -->
   <node name="check_forbidden_region" pkg="social_worlds" type="check_region_node" output="screen">
-    <param name="robot_name" value="$(arg robot_name)"/>
     <param name="region_name" value="forbidden_region"/>
+    <param name="model_name" value="$(arg robot_name)"/>
     <!-- <param name="region_name" value="start"/> -->
   </node>
 
